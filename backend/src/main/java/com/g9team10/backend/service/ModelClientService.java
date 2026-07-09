@@ -11,10 +11,11 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class ModelClientService {
+public class ModelClientService implements  ModelPredictionService{
 
     private final WebClient webClient;
 
+    @Override
     public ModelPredictResponseDTO predict(ModelPredictRequestDTO request) {
         try {
             return webClient.post()

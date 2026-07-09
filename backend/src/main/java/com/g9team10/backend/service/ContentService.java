@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ContentService {
 
-    private final ModelClientService modelClientService;
+    private final ModelPredictionService modelPredictionService;
 
     public ContentResponseDTO analysis(ContentRequestDTO request) {
         var predictRequest = new ModelPredictRequestDTO(request.title(), request.text());
-        var response = modelClientService.predict(predictRequest);
+        var response = modelPredictionService.predict(predictRequest);
 
-        return new ContentResponseDTO(response.category(), response.probability(), response.additionalInformation());
+        return new ContentResponseDTO(response.category(),
+                response.probability(),
+                response.additionalInformation());
     }
 }
