@@ -2,6 +2,7 @@ package com.g9team10.backend.service;
 
 import com.g9team10.backend.dto.LoginRequest;
 import com.g9team10.backend.dto.RegisterRequest;
+import com.g9team10.backend.exception.BusinessException;
 import com.g9team10.backend.model.User;
 import com.g9team10.backend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,7 +23,7 @@ public class UserService {
 
     public void register(RegisterRequest request){
         if(userRepository.existsByEmail(request.email())){
-            throw new RuntimeException("Email já cadastrado");
+            throw new BusinessException("Email already registered");
         }
 
         User user = new User();
