@@ -6,7 +6,9 @@ import lombok.Getter;
 public enum ProblemType {
 
     INVALID_REQUEST("/invalid-request", "Invalid request"),
-    BUSINESS_ERROR("/business-error", "Business error" ),;
+    BUSINESS_ERROR("/business-error", "Business error"),
+    INVALID_CREDENTIALS("/invalid-credentials", "Invalid credentials"),
+    ;
 
     private final String title;
     private final String uri;

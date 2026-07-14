@@ -1,3 +1,16 @@
+set foreign_key_checks = 0;
+
+delete from tag;
+delete from content;
+delete from content_tag;
+
+set foreign_key_checks = 1;
+
+alter table tag auto_increment = 1;
+alter table content auto_increment = 1;
+alter table content_tag auto_increment = 1;
+
+
 INSERT INTO tag (id, name)
 VALUES (1, 'java'),
        (2, 'spring boot'),
