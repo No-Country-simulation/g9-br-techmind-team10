@@ -26,4 +26,12 @@ public class FavoriteService {
 
         favoriteRepository.save(new Favorite(user, content));
     }
+
+    @Transactional
+    public void uncheck(User user, Long contentId) {
+        Content content = contentService.find(contentId);
+
+        FavoriteId id = new FavoriteId(user.getId(), content.getId());
+        favoriteRepository.deleteById(id);
+    }
 }

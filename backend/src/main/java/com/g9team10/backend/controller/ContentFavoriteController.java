@@ -21,7 +21,8 @@ public class ContentFavoriteController {
     }
 
     @DeleteMapping("/{id}/favorite")
-    public ResponseEntity<Void> uncheckFavorite(){
+    public ResponseEntity<Void> uncheckFavorite(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        favoriteService.uncheck(user, id);
         return ResponseEntity.noContent().build();
     }
 
