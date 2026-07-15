@@ -1,11 +1,15 @@
 package com.g9team10.backend.controller;
 
+import com.g9team10.backend.dto.ContentSummaryDTO;
+import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.User;
 import com.g9team10.backend.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -27,7 +31,12 @@ public class ContentFavoriteController {
     }
 
     @GetMapping("/favorites")
-    public ResponseEntity<Void> listFavorites(){
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<List<ContentSummaryDTO>> listFavorites(@AuthenticationPrincipal User user){
+        List<Content> favorites = favoriteService.list(user.getId());
+        List<ContentSummaryDTO> response = favorites.stream()
+                .map(content -> new ContentSummaryDTO(content.getId(), content.getTitle(), content.getCategory()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

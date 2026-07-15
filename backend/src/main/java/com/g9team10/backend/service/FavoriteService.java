@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 public class FavoriteService {
@@ -33,5 +35,12 @@ public class FavoriteService {
 
         FavoriteId id = new FavoriteId(user.getId(), content.getId());
         favoriteRepository.deleteById(id);
+    }
+
+    public List<Content> list(Long userId) {
+        return favoriteRepository.findByUser(userId)
+                .stream()
+                .map(Favorite::getContent)
+                .toList();
     }
 }
