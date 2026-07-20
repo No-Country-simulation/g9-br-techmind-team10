@@ -9,6 +9,8 @@ public record ContentSearchResponseDTO(
         String category,
         String level,
         Double probability,
+        Boolean lowConfidenceAlert,
+        Boolean revised,
         List<String> tags
 ) {
 }

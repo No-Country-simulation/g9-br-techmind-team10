@@ -24,8 +24,11 @@ public class ContentSearchService {
                 .toList();
         String normalizedLevel = normalizeLevel(level);
 
-        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel
-        );
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+
+        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
 
         return results.stream()
                 .map(content -> new ContentSearchResponseDTO(
@@ -35,6 +38,8 @@ public class ContentSearchService {
                         content.getCategory(),
                         content.getLevel(),
                         content.getProbability(),
+                        trustProperties.isLowConfidence(content.getProbability()),
+                        content.getRevised(),
                         content.getTags().stream().map(Tag::getName).toList()
                 ))
                 .toList();
