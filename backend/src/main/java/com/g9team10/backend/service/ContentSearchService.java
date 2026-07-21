@@ -1,7 +1,6 @@
 package com.g9team10.backend.service;
 
 import com.g9team10.backend.dto.ContentSearchResponseDTO;
-import com.g9team10.backend.infra.config.TrustPropertiesConfig;
 import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.Tag;
 import com.g9team10.backend.repository.ContentSearchRepository;
@@ -16,7 +15,6 @@ import java.util.List;
 public class ContentSearchService {
 
     private final ContentSearchRepository contentSearchRepository;
-    private final TrustPropertiesConfig trustProperties;
 
     public List<ContentSearchResponseDTO> searchByTags(List<String> tags) {
         List<String> normalized = tags.stream()
@@ -24,12 +22,13 @@ public class ContentSearchService {
                 .filter(tag -> !tag.isBlank())
                 .distinct()
                 .toList();
+        String normalizedLevel = normalizeLevel(level);
 
         if (normalized.isEmpty()) {
             return List.of();
         }
 
-        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size());
+        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
 
         return results.stream()
                 .map(content -> new ContentSearchResponseDTO(
@@ -37,12 +36,20 @@ public class ContentSearchService {
                         content.getTitle(),
                         content.getText(),
                         content.getCategory(),
+                        content.getLevel(),
                         content.getProbability(),
                         trustProperties.isLowConfidence(content.getProbability()),
                         content.getRevised(),
                         content.getTags().stream().map(Tag::getName).toList()
                 ))
                 .toList();
+    }
+
+    private String normalizeLevel(String level) {
+        if (level == null || level.isBlank()) {
+            return null;
+        }
+        return normalizeTagKey(level);
     }
 
     private String normalizeTagKey(String value) {
