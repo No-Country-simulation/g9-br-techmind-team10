@@ -30,3 +30,7 @@ truststore.jks
 # Local Oracle/OCI files
 *.pem
 *.key
+
+# Local ONNX/vector model files
+docker/oracle/onnx/
+*.onnx
