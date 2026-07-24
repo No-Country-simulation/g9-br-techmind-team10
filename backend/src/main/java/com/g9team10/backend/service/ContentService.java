@@ -6,9 +6,12 @@ import com.g9team10.backend.dto.ModelPredictRequestDTO;
 import com.g9team10.backend.dto.ModelPredictResponseDTO;
 import com.g9team10.backend.exception.ContentNotFoundException;
 import com.g9team10.backend.model.Content;
+import com.g9team10.backend.model.ContentChunk;
 import com.g9team10.backend.model.Tag;
+import com.g9team10.backend.repository.ContentChunkRepository;
 import com.g9team10.backend.repository.ContentRepository;
 import com.g9team10.backend.repository.TagRepository;
+import com.g9team10.backend.util.TextChunker;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class ContentService {
     private final ModelPredictionService modelPredictionService;
     private final TagRepository tagRepository;
     private final ContentRepository contentRepository;
+    private final ContentChunkRepository contentChunkRepository;
 
     @Transactional
     public ContentResponseDTO analysis(ContentRequestDTO request) {
@@ -44,7 +48,13 @@ public class ContentService {
             }
         }
 
-        contentRepository.save(content);
+        content = contentRepository.save(content);
+
+        List<String> chunks = TextChunker.split(content.getText());
+        for (int i = 0; i < chunks.size(); i++) {
+            ContentChunk chunk = contentChunkRepository.save(new ContentChunk(content, i, chunks.get(i)));
+            contentChunkRepository.generateEmbedding(chunk.getId(), chunk.getText());
+        }
 
         return new ContentResponseDTO(
                 response.category(),
