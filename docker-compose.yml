@@ -9,8 +9,19 @@ services:
     volumes:
       - oracle-data:/opt/oracle/oradata
       - ./docker/oracle/startup:/opt/oracle/scripts/startup:ro
+      - ./docker/oracle/onnx:/opt/oracle/onnx:ro
     restart: unless-stopped
-
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo 'SELECT 1 FROM dual;' | sqlplus -s system/${ORACLE_SYS_PASSWORD}@//localhost:1521/FREEPDB1 >/dev/null"
+       ]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 5m
+    
   backend:
     build: ./backend
     container_name: techmind-backend
@@ -22,7 +33,8 @@ services:
       ORACLE_DB_USERNAME: ${ORACLE_DB_USERNAME:-TECHMIND_APP}
       ORACLE_DB_PASSWORD: ${ORACLE_DB_PASSWORD:-TechmindApp123}
     depends_on:
-      - oracle-db
+      oracle-db:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
