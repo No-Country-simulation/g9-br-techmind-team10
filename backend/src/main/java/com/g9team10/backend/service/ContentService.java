@@ -1,15 +1,13 @@
 package com.g9team10.backend.service;
 
-import com.g9team10.backend.dto.ContentRequestDTO;
-import com.g9team10.backend.dto.ContentResponseDTO;
-import com.g9team10.backend.dto.ModelPredictRequestDTO;
-import com.g9team10.backend.dto.ModelPredictResponseDTO;
+import com.g9team10.backend.dto.*;
 import com.g9team10.backend.exception.ContentNotFoundException;
 import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.ContentChunk;
 import com.g9team10.backend.model.Tag;
 import com.g9team10.backend.repository.ContentChunkRepository;
 import com.g9team10.backend.repository.ContentRepository;
+import com.g9team10.backend.repository.SemanticSearchRepository;
 import com.g9team10.backend.repository.TagRepository;
 import com.g9team10.backend.util.TextChunker;
 import jakarta.transaction.Transactional;
@@ -29,6 +27,7 @@ public class ContentService {
     private final TagRepository tagRepository;
     private final ContentRepository contentRepository;
     private final ContentChunkRepository contentChunkRepository;
+    private final SemanticSearchRepository semanticSearchRepository;
 
     @Transactional
     public ContentResponseDTO analysis(ContentRequestDTO request) {
@@ -92,6 +91,10 @@ public class ContentService {
         content.review();
 
         return contentRepository.save(content);
+    }
+
+    public List<SimilarContentDTO> searchSimilar(String q, Integer limit) {
+        return semanticSearchRepository.searchSimilarContent(q, limit);
     }
 
     private Tag findOrCreateTag(String normalizedValue) {

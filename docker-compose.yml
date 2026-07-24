@@ -1,7 +1,18 @@
 services:
+  download-model:
+    image: curlimages/curl:latest
+    container_name: techmind-download-model
+    volumes:
+      - ./docker/oracle/onnx:/models
+      - ./docker/oracle/scripts/download-model.sh:/download-model.sh:ro
+    command: sh /download-model.sh
+
   oracle-db:
     image: container-registry.oracle.com/database/free:latest
     container_name: techmind-oracle-db
+    depends_on:
+      download-model:
+        condition: service_completed_successfully
     ports:
       - "1521:1521"
     environment:
@@ -15,7 +26,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "echo 'SELECT 1 FROM dual;' | sqlplus -s system/${ORACLE_SYS_PASSWORD}@//localhost:1521/FREEPDB1 >/dev/null"
+          "echo 'SELECT 1 FROM dual;' | sqlplus -s system/${ORACLE_SYS_PASSWORD:-TechmindSys123}@//localhost:1521/FREEPDB1 >/dev/null"
        ]
       interval: 20s
       timeout: 10s
