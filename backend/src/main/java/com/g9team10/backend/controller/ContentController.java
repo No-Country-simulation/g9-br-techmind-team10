@@ -3,6 +3,7 @@ package com.g9team10.backend.controller;
 import com.g9team10.backend.dto.ContentDetailDTO;
 import com.g9team10.backend.dto.ContentRequestDTO;
 import com.g9team10.backend.dto.ContentResponseDTO;
+import com.g9team10.backend.dto.SimilarContentDTO;
 import com.g9team10.backend.infra.config.TrustPropertiesConfig;
 import com.g9team10.backend.model.User;
 import com.g9team10.backend.service.ContentService;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -64,6 +67,11 @@ public class ContentController {
         var content = contentService.find(id);
         historyService.registerView(user, id);
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
+    }
+
+    @GetMapping("/search-similar")
+    public ResponseEntity<List<SimilarContentDTO>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(contentService.searchSimilar(q, limit));
     }
 
     @PutMapping("/{id}/tags")
