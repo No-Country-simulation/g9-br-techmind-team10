@@ -11,4 +11,8 @@ public interface SemanticSearchRepository {
             int limit
     );
 
+    List<SimilarContentDTO> searchRecommendations(
+            Long id,
+            Integer limit
+    );
 }

@@ -55,6 +55,8 @@ public class ContentService {
             contentChunkRepository.generateEmbedding(chunk.getId(), chunk.getText());
         }
 
+        contentRepository.generateCentroid(content.getId());
+
         return new ContentResponseDTO(
                 response.category(),
                 response.probability(),
@@ -95,6 +97,10 @@ public class ContentService {
 
     public List<SimilarContentDTO> searchSimilar(String q, Integer limit) {
         return semanticSearchRepository.searchSimilarContent(q, limit);
+    }
+
+    public List<SimilarContentDTO> searchRecommendations(Long id, Integer limit) {
+        return semanticSearchRepository.searchRecommendations(id, limit);
     }
 
     private Tag findOrCreateTag(String normalizedValue) {
