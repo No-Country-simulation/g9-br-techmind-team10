@@ -20,7 +20,8 @@ public interface ContentSearchRepository extends JpaRepository<Content, Long> {
             GROUP BY c2.id
             HAVING COUNT(DISTINCT t2.name) = :qtdTags
         )
+        AND (:level IS NULL OR c.level = :level)
         ORDER BY c.dateProcessing DESC
     """)
-    List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags);
+    List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags, @Param("level") String level);
 }

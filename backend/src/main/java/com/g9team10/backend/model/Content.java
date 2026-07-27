@@ -23,6 +23,7 @@ public class Content {
     private String title;
     private String text;
     private String category;
+    private String level = "intermediario";
     private Double probability;
     private Boolean revised = Boolean.FALSE;
     @CreationTimestamp
@@ -47,6 +48,9 @@ public class Content {
         getTags().add(tag);
     }
 
+    public void setLevel(String level) {
+        this.level = level;
+    }
     public void review() {
         this.revised = Boolean.TRUE;
     }
