@@ -52,25 +52,51 @@
                     </button>
                 </div>
 
-                <div class="manual-search" id="manual-search" hidden>
-                    <label class="search-label" for="library-search">Adicionar tags manualmente</label>
-                    <input id="library-search" class="search-input" type="search"
-                        placeholder="Digite uma tag. Ex.: Java, Docker, JWT">
-                    <div class="tag-suggestions" id="tag-suggestions" hidden></div>
+                <div class="search-mode-switch" role="group" aria-label="Tipo de busca">
+                    <button class="search-mode-option is-active" type="button" data-search-mode="tags"
+                        aria-pressed="true">
+                        Buscar por tags
+                    </button>
+                    <button class="search-mode-option" type="button" data-search-mode="semantic"
+                        aria-pressed="false">
+                        Busca semântica
+                    </button>
                 </div>
 
-                <div class="tag-section">
-                    <div class="tag-group-list" id="tag-group-list" aria-label="Categorias principais"></div>
-                </div>
+                <p class="search-mode-helper" id="search-mode-helper">
+                    Combine categorias e tags do catálogo para encontrar conteúdos classificados.
+                </p>
 
-                <div class="tag-section" id="subtag-section" hidden>
-                    <div class="subtag-list" id="subtag-list" aria-label="Tags relacionadas"></div>
-                </div>
-
-                <div class="selected-filter-panel">
-                    <div class="selected-tags" id="selected-tags">
-                        <span class="muted-text">Nenhuma tag selecionada.</span>
+                <div class="tag-search-controls" id="tag-search-controls">
+                    <div class="manual-search" id="manual-search" hidden>
+                        <label class="search-label" for="library-search">Adicionar tags manualmente</label>
+                        <input id="library-search" class="search-input" type="search"
+                            placeholder="Digite uma tag. Ex.: Java, Docker, JWT">
+                        <div class="tag-suggestions" id="tag-suggestions" hidden></div>
                     </div>
+
+                    <div class="tag-section">
+                        <div class="tag-group-list" id="tag-group-list" aria-label="Categorias principais"></div>
+                    </div>
+
+                    <div class="tag-section" id="subtag-section" hidden>
+                        <div class="subtag-list" id="subtag-list" aria-label="Tags relacionadas"></div>
+                    </div>
+
+                    <div class="selected-filter-panel">
+                        <div class="selected-tags" id="selected-tags">
+                            <span class="muted-text">Nenhuma tag selecionada.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="semantic-search-panel" id="semantic-search-panel" hidden>
+                    <label class="search-label" for="semantic-search-input">Busca semântica</label>
+                    <input id="semantic-search-input" class="search-input" type="search"
+                        placeholder="Digite uma pergunta ou ideia. Ex.: como configurar containers com Docker Compose">
+                    <p class="semantic-help">
+                        Esta busca compara o significado do texto digitado com os conteúdos salvos na biblioteca.
+                    </p>
                 </div>
 
                 <div class="filter-actions">

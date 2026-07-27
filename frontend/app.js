@@ -24,6 +24,11 @@ const searchInput = document.querySelector("#library-search");
 const tagSuggestions = document.querySelector("#tag-suggestions");
 const toggleSearchButton = document.querySelector("#toggle-search");
 const manualSearch = document.querySelector("#manual-search");
+const searchModeButtons = document.querySelectorAll("[data-search-mode]");
+const tagSearchControls = document.querySelector("#tag-search-controls");
+const semanticSearchPanel = document.querySelector("#semantic-search-panel");
+const semanticSearchInput = document.querySelector("#semantic-search-input");
+const searchModeHelper = document.querySelector("#search-mode-helper");
 const tagGroupList = document.querySelector("#tag-group-list");
 const subtagSection = document.querySelector("#subtag-section");
 const subtagList = document.querySelector("#subtag-list");
@@ -79,6 +84,8 @@ let tagCatalog = [];
 let activeGroupKey = "";
 let selectedTags = [];
 let appliedTags = [];
+let searchMode = "tags";
+let appliedSemanticQuery = "";
 let loadedContents = [];
 let hasSearched = false;
 let isLoadingContents = false;
@@ -360,6 +367,17 @@ async function fetchContentsByTags(tags) {
   });
 }
 
+async function fetchSimilarContents(query, limit = 10) {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit)
+  });
+
+  return apiRequest(`/content/search-similar?${params.toString()}`, {
+    auth: true
+  });
+}
+
 async function fetchContentDetail(contentId) {
   return apiRequest(`/content/${contentId}`, {
     auth: true
@@ -447,6 +465,26 @@ function formatConfidence(probability) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1
   }).format(probability)}`;
+}
+
+function formatSemanticDistance(distance) {
+  if (typeof distance !== "number") {
+    return "Distância não informada";
+  }
+
+  return `Distância: ${new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(distance)}`;
+}
+
+function normalizeSimilarContent(content) {
+  return {
+    ...content,
+    text: content.text || content.content || "Clique para abrir o conteúdo completo.",
+    tags: Array.isArray(content.tags) ? content.tags : [],
+    semanticDistance: content.distance
+  };
 }
 
 function getUniqueTagKeys(tagKeys) {
@@ -612,6 +650,47 @@ function showScreen(screenName) {
   }
 }
 
+function renderSearchMode() {
+  const isSemanticSearch = searchMode === "semantic";
+
+  searchModeButtons.forEach((button) => {
+    const isActive = button.dataset.searchMode === searchMode;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  tagSearchControls.hidden = isSemanticSearch;
+  semanticSearchPanel.hidden = !isSemanticSearch;
+  toggleSearchButton.hidden = isSemanticSearch;
+  applyFiltersButton.textContent = isSemanticSearch ? "Buscar" : "Filtrar";
+  searchModeHelper.textContent = isSemanticSearch
+    ? "Digite uma pergunta, termo técnico ou descrição livre para encontrar conteúdos pelo significado."
+    : "Combine categorias e tags do catálogo para encontrar conteúdos classificados.";
+
+  if (isSemanticSearch) {
+    tagSuggestions.hidden = true;
+  }
+}
+
+function setSearchMode(mode) {
+  if (!["tags", "semantic"].includes(mode) || searchMode === mode) {
+    return;
+  }
+
+  searchMode = mode;
+  currentListMode = "search";
+  hasSearched = false;
+  loadedContents = [];
+  libraryErrorMessage = "";
+
+  renderSearchMode();
+  renderContents();
+
+  if (searchMode === "semantic") {
+    semanticSearchInput.focus();
+  }
+}
+
 function renderTagGroups() {
   tagGroupList.innerHTML = "";
 
@@ -709,6 +788,37 @@ async function applyFilters() {
     return;
   }
 
+  currentListMode = "search";
+  hasSearched = true;
+  loadedContents = [];
+  libraryErrorMessage = "";
+
+  if (searchMode === "semantic") {
+    appliedTags = [];
+    appliedSemanticQuery = semanticSearchInput.value.trim();
+
+    if (!appliedSemanticQuery) {
+      renderContents();
+      return;
+    }
+
+    isLoadingContents = true;
+    renderContents();
+
+    try {
+      const data = await fetchSimilarContents(appliedSemanticQuery);
+      loadedContents = Array.isArray(data) ? data.map(normalizeSimilarContent) : [];
+    } catch (error) {
+      loadedContents = [];
+      libraryErrorMessage = error.message || "Não foi possível realizar a busca semântica.";
+    } finally {
+      isLoadingContents = false;
+      renderContents();
+    }
+
+    return;
+  }
+
   const typedTag = getCurrentTypedTag();
   const matchedTag = findTagByTerm(typedTag);
 
@@ -720,11 +830,8 @@ async function applyFilters() {
     renderSelectedTags();
   }
 
-  currentListMode = "search";
   appliedTags = [...selectedTags];
-  hasSearched = true;
-  loadedContents = [];
-  libraryErrorMessage = "";
+  appliedSemanticQuery = "";
 
   if (appliedTags.length === 0) {
     renderContents();
@@ -749,6 +856,7 @@ async function applyFilters() {
 function clearFilters() {
   selectedTags = [];
   appliedTags = [];
+  appliedSemanticQuery = "";
   activeGroupKey = "";
   currentListMode = "search";
   hasSearched = false;
@@ -756,6 +864,7 @@ function clearFilters() {
   libraryErrorMessage = "";
 
   clearManualSearch();
+  semanticSearchInput.value = "";
 
   renderTagGroups();
   renderSubTags();
@@ -772,7 +881,7 @@ function getResultsTitle() {
     return "Histórico de leitura";
   }
 
-  return "Conteúdos encontrados";
+  return searchMode === "semantic" ? "Resultados da busca semântica" : "Conteúdos encontrados";
 }
 
 function getEmptyMessage() {
@@ -784,31 +893,41 @@ function getEmptyMessage() {
     return "Seu histórico ainda está vazio. Abra algum conteúdo para registrá-lo aqui.";
   }
 
-  return "Nenhum conteúdo encontrado para os filtros selecionados.";
+  return searchMode === "semantic"
+    ? "Nenhum conteúdo encontrado para a busca semântica."
+    : "Nenhum conteúdo encontrado para os filtros selecionados.";
 }
 
 function createContentCard(content) {
   const card = document.createElement("button");
   const needsReview = hasPendingLowConfidence(content);
+  const hasSemanticDistance = typeof content.semanticDistance === "number";
 
   card.className = needsReview ? "content-card needs-review" : "content-card";
   card.type = "button";
 
-  const summaryText = content.text || "Clique para abrir o conteúdo completo.";
+  const summaryText = content.text || content.content || "Clique para abrir o conteúdo completo.";
   const tagsMarkup = Array.isArray(content.tags) && content.tags.length > 0
     ? `<div class="card-tags">${content.tags.slice(0, 4).map((tag) => `<span>${getTagLabel(tag)}</span>`).join("")}</div>`
     : "";
   const reviewBadge = needsReview
     ? '<span class="review-badge">Baixa confiança</span>'
     : "";
+  const semanticBadge = hasSemanticDistance
+    ? '<span class="semantic-badge">Busca semântica</span>'
+    : "";
+  const semanticMeta = hasSemanticDistance
+    ? `<span class="semantic-meta">${formatSemanticDistance(content.semanticDistance)}</span>`
+    : "";
 
   card.innerHTML = `
     <div class="card-topline">
       <span class="content-category">${getCategoryLabel(content.category)}</span>
-      ${reviewBadge}
+      <span class="card-badges">${semanticBadge}${reviewBadge}</span>
     </div>
     <strong>${content.title}</strong>
     <p>${summaryText}</p>
+    ${semanticMeta}
     ${tagsMarkup}
   `;
 
@@ -820,6 +939,9 @@ function createContentCard(content) {
 function renderContents() {
   contentGrid.innerHTML = "";
   applyFiltersButton.disabled = isLoadingContents;
+  applyFiltersButton.textContent = isLoadingContents
+    ? "Buscando..."
+    : searchMode === "semantic" ? "Buscar" : "Filtrar";
   resultsTitle.textContent = getResultsTitle();
 
   if (libraryErrorMessage) {
@@ -831,14 +953,23 @@ function renderContents() {
 
   if (currentListMode === "search" && !hasSearched) {
     resultCount.textContent = "0 conteúdos";
-    libraryEmpty.textContent = "Selecione uma ou mais tags e clique em Filtrar para consultar a biblioteca.";
+    libraryEmpty.textContent = searchMode === "semantic"
+      ? "Digite uma pergunta ou descrição e clique em Buscar para consultar por significado."
+      : "Selecione uma ou mais tags e clique em Filtrar para consultar a biblioteca.";
     libraryEmpty.classList.add("is-visible");
     return;
   }
 
-  if (currentListMode === "search" && appliedTags.length === 0) {
+  if (currentListMode === "search" && searchMode === "tags" && appliedTags.length === 0) {
     resultCount.textContent = "0 conteúdos";
     libraryEmpty.textContent = "Selecione pelo menos uma tag antes de iniciar a pesquisa.";
+    libraryEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (currentListMode === "search" && searchMode === "semantic" && !appliedSemanticQuery) {
+    resultCount.textContent = "0 conteúdos";
+    libraryEmpty.textContent = "Digite uma pergunta ou descrição antes de iniciar a busca semântica.";
     libraryEmpty.classList.add("is-visible");
     return;
   }
@@ -846,7 +977,9 @@ function renderContents() {
   if (isLoadingContents) {
     resultCount.textContent = "Buscando...";
     libraryEmpty.textContent = currentListMode === "search"
-      ? "Consultando conteúdos na API."
+      ? searchMode === "semantic"
+        ? "Consultando conteúdos por significado na API."
+        : "Consultando conteúdos na API."
       : "Carregando conteúdos da API.";
     libraryEmpty.classList.add("is-visible");
     return;
@@ -1099,9 +1232,13 @@ async function handleTagCorrection(event) {
 function resetLibraryFiltersForUserList() {
   selectedTags = [];
   appliedTags = [];
+  appliedSemanticQuery = "";
   activeGroupKey = "";
+  searchMode = "tags";
 
   clearManualSearch();
+  semanticSearchInput.value = "";
+  renderSearchMode();
 
   renderTagGroups();
   renderSubTags();
@@ -1323,10 +1460,14 @@ catalogForm.addEventListener("submit", async (event) => {
     hasSearched = false;
     loadedContents = [];
     appliedTags = [];
+    appliedSemanticQuery = "";
+    semanticSearchInput.value = "";
     selectedTags = [];
     activeGroupKey = "";
+    searchMode = "tags";
     currentListMode = "search";
 
+    renderSearchMode();
     renderTagGroups();
     renderSubTags();
     renderSelectedTags();
@@ -1384,7 +1525,22 @@ authActionButton.addEventListener("click", () => {
   showScreen("auth");
 });
 
+searchModeButtons.forEach((button) => {
+  button.addEventListener("click", () => setSearchMode(button.dataset.searchMode));
+});
+
+semanticSearchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    applyFilters();
+  }
+});
+
 toggleSearchButton.addEventListener("click", () => {
+  if (searchMode !== "tags") {
+    return;
+  }
+
   manualSearch.hidden = !manualSearch.hidden;
 
   if (!manualSearch.hidden) {
@@ -1430,4 +1586,5 @@ document.querySelectorAll("[data-view]").forEach((button) => {
 
 setAuthMode("login");
 renderAuthState();
+renderSearchMode();
 fetchTags();
