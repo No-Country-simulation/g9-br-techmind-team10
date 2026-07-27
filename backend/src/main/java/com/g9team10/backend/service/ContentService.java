@@ -55,6 +55,8 @@ public class ContentService {
             contentChunkRepository.generateEmbedding(chunk.getId(), chunk.getText());
         }
 
+        contentRepository.generateCentroid(content.getId());
+
         return new ContentResponseDTO(
                 response.category(),
                 response.probability(),
