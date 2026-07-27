@@ -74,6 +74,11 @@ public class ContentController {
         return ResponseEntity.ok(contentService.searchSimilar(q, limit));
     }
 
+    @GetMapping("/{id}/recommendations")
+    public ResponseEntity<List<SimilarContentDTO>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
+        return ResponseEntity.ok(contentService.searchRecommendations(id, limit));
+    }
+
     @PutMapping("/{id}/tags")
     public ResponseEntity<ContentDetailDTO> fixTags(
             @PathVariable Long id,

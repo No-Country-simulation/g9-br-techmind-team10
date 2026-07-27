@@ -99,6 +99,10 @@ public class ContentService {
         return semanticSearchRepository.searchSimilarContent(q, limit);
     }
 
+    public List<SimilarContentDTO> searchRecommendations(Long id, Integer limit) {
+        return semanticSearchRepository.searchRecommendations(id, limit);
+    }
+
     private Tag findOrCreateTag(String normalizedValue) {
         return tagRepository.findByName(normalizedValue)
                 .orElseGet(() -> tagRepository.save(new Tag(normalizedValue)));

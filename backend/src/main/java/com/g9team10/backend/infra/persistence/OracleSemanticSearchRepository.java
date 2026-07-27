@@ -72,4 +72,53 @@ public class OracleSemanticSearchRepository implements SemanticSearchRepository 
                     }
                 }).toList();
     }
+
+    @Override
+    public List<SimilarContentDTO> searchRecommendations(Long id, Integer limit) {
+        String sql = """
+                WITH source AS (
+                    SELECT embedding_centroid
+                    FROM content
+                    WHERE id = :contentId
+                )
+                SELECT
+                    c.id,
+                    c.title,
+                    C.text AS content,
+                    c.category,
+                    VECTOR_DISTANCE(
+                        c.embedding_centroid,
+                        s.embedding_centroid,
+                        COSINE
+                    ) AS distance
+                FROM content c
+                CROSS JOIN source s
+                WHERE c.id != :contentId
+                  AND c.embedding_centroid IS NOT NULL
+                ORDER BY distance
+                FETCH FIRST :limit ROWS ONLY;
+                """;
+
+        List<Object[]> result = entityManager
+                .createNativeQuery(sql)
+                .setParameter("contentId", id)
+                .setParameter("limit", limit)
+                .getResultList();
+
+        return result.stream()
+                .map(row -> {
+                    Clob clob = (Clob) row[2];
+                    try {
+                        return new SimilarContentDTO(
+                                ((Number) row[0]).longValue(),
+                                (String) row[1],
+                                clob.getSubString(1, (int) clob.length()),
+                                (String) row[3],
+                                ((Number) row[4]).doubleValue()
+                        );
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).toList();
+    }
 }
