@@ -76,12 +76,7 @@ public class UserContentTagController {
         List<Content> contents = userContentTagService.searchContentsByPersonalTags(user, tags);
 
         List<ContentSummaryDTO> response = contents.stream()
-                .map(content -> new ContentSummaryDTO(
-                        content.getId(),
-                        content.getTitle(),
-                        content.getCategory(),
-                        content.getLevel()
-                ))
+                .map(ContentSummaryDTO::fromEntity)
                 .toList();
 
         return ResponseEntity.ok(response);

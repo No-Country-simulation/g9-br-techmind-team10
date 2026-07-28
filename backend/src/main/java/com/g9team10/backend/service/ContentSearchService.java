@@ -5,10 +5,10 @@ import com.g9team10.backend.infra.config.TrustPropertiesConfig;
 import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.Tag;
 import com.g9team10.backend.repository.ContentRepository;
+import com.g9team10.backend.shared.TextNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +22,7 @@ public class ContentSearchService {
 
     public List<ContentSearchResponseDTO> searchByTags(List<String> tags, String level) {
         List<String> normalized = tags.stream()
-                .map(this::normalizeTagKey)
+                .map(TextNormalizer::normalize)
                 .filter(tag -> !tag.isBlank())
                 .distinct()
                 .toList();
@@ -53,19 +53,10 @@ public class ContentSearchService {
         if (level == null || level.isBlank()) {
             return null;
         }
-        String normalizedLevel = normalizeTagKey(level);
+        String normalizedLevel = TextNormalizer.normalize(level);
         if (!VALID_LEVELS.contains(normalizedLevel)) {
             throw new IllegalArgumentException("Nivel invalido. Use: basico, intermediario ou avancado.");
         }
         return normalizedLevel;
-    }
-
-    private String normalizeTagKey(String value) {
-        return Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toLowerCase()
-                .trim()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-|-$", "");
     }
 }

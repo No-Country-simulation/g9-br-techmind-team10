@@ -9,12 +9,12 @@ import com.g9team10.backend.repository.ContentChunkRepository;
 import com.g9team10.backend.repository.ContentRepository;
 import com.g9team10.backend.repository.SemanticSearchRepository;
 import com.g9team10.backend.repository.TagRepository;
+import com.g9team10.backend.shared.TextNormalizer;
 import com.g9team10.backend.util.TextChunker;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,7 +42,7 @@ public class ContentService {
 
         if (tags != null) {
             for (String grossValue : tags) {
-                String normalizedValue = normalizeTagKey(grossValue);
+                String normalizedValue = TextNormalizer.normalize(grossValue);
 
                 Tag tag = findOrCreateTag(normalizedValue);
 
@@ -78,7 +78,7 @@ public class ContentService {
         Content content = find(id);
 
         Set<Tag> normalizeTags = fixedTags.stream()
-                .map(this::normalizeTagKey)
+                .map(TextNormalizer::normalize)
                 .filter(tag -> !tag.isBlank())
                 .distinct()
                 .map(this::findOrCreateTag)
@@ -110,14 +110,5 @@ public class ContentService {
     private Tag findOrCreateTag(String normalizedValue) {
         return tagRepository.findByName(normalizedValue)
                 .orElseGet(() -> tagRepository.save(new Tag(normalizedValue)));
-    }
-
-    private String normalizeTagKey(String value) {
-        return Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toLowerCase()
-                .trim()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-|-$", "");
     }
 }

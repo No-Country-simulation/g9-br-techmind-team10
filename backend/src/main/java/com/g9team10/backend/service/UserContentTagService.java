@@ -8,14 +8,13 @@ import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.User;
 import com.g9team10.backend.model.UserContentTag;
 import com.g9team10.backend.repository.UserContentTagRepository;
+import com.g9team10.backend.shared.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class UserContentTagService {
         Content content = contentService.find(contentId);
 
         String displayName = normalizeDisplayName(request.name());
-        String normalizedName = normalizeTagKey(displayName);
+        String normalizedName = TextNormalizer.normalize(displayName);
 
         return userContentTagRepository
                 .findByUserIdAndContentIdAndNormalizedName(user.getId(), contentId, normalizedName)
@@ -83,7 +82,7 @@ public class UserContentTagService {
     public List<Content> searchContentsByPersonalTags(User user, List<String> tags) {
         List<String> normalizedNames = tags.stream()
                 .map(this::normalizeDisplayName)
-                .map(this::normalizeTagKey)
+                .map(TextNormalizer::normalize)
                 .distinct()
                 .toList();
 
@@ -106,20 +105,6 @@ public class UserContentTagService {
         }
 
         return displayName;
-    }
-
-    private String normalizeTagKey(String value) {
-        String normalizedValue = Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("(^-|-$)", "");
-
-        if (normalizedValue.isBlank()) {
-            throw new InvalidUserContentTagException();
-        }
-
-        return normalizedValue;
     }
 
     private static class UserContentTagSummaryAccumulator {
