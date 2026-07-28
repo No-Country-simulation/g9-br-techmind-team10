@@ -10,15 +10,17 @@ import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
 public class ContentSearchService {
 
+    private static final Set<String> VALID_LEVELS = Set.of("basico", "intermediario", "avancado");
     private final ContentSearchRepository contentSearchRepository;
     private final TrustPropertiesConfig trustProperties;
 
-    public List<ContentSearchResponseDTO> searchByTags(List<String> tags) {
+    public List<ContentSearchResponseDTO> searchByTags(List<String> tags, String level) {
         List<String> normalized = tags.stream()
                 .map(this::normalizeTagKey)
                 .filter(tag -> !tag.isBlank())
@@ -29,7 +31,8 @@ public class ContentSearchService {
             return List.of();
         }
 
-        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size());
+        String normalizedLevel = normalizeLevel(level);
+        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
 
         return results.stream()
                 .map(content -> new ContentSearchResponseDTO(
@@ -37,12 +40,24 @@ public class ContentSearchService {
                         content.getTitle(),
                         content.getText(),
                         content.getCategory(),
+                        content.getLevel(),
                         content.getProbability(),
                         trustProperties.isLowConfidence(content.getProbability()),
                         content.getRevised(),
                         content.getTags().stream().map(Tag::getName).toList()
                 ))
                 .toList();
+    }
+
+    private String normalizeLevel(String level) {
+        if (level == null || level.isBlank()) {
+            return null;
+        }
+        String normalizedLevel = normalizeTagKey(level);
+        if (!VALID_LEVELS.contains(normalizedLevel)) {
+            throw new IllegalArgumentException("Nivel invalido. Use: basico, intermediario ou avancado.");
+        }
+        return normalizedLevel;
     }
 
     private String normalizeTagKey(String value) {

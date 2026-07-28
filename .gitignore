@@ -11,6 +11,8 @@ backend/build/
 *.env
 .env.*
 
+!.env.example
+
 # Oracle wallet and sensitive database files
 wallet/
 backend/wallet/

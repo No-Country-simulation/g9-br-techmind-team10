@@ -79,7 +79,8 @@ public class UserContentTagController {
                 .map(content -> new ContentSummaryDTO(
                         content.getId(),
                         content.getTitle(),
-                        content.getCategory()
+                        content.getCategory(),
+                        content.getLevel()
                 ))
                 .toList();
 
