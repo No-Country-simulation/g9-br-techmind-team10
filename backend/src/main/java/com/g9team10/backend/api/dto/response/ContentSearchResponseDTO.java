@@ -1,0 +1,16 @@
+package com.g9team10.backend.api.dto.response;
+
+import java.util.List;
+
+public record ContentSearchResponseDTO(
+        Long id,
+        String title,
+        String text,
+        String category,
+        String level,
+        Double probability,
+        Boolean lowConfidenceAlert,
+        Boolean revised,
+        List<String> tags
+) {
+}

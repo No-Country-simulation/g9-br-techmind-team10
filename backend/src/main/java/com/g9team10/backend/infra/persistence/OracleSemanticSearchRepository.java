@@ -1,7 +1,7 @@
 package com.g9team10.backend.infra.persistence;
 
-import com.g9team10.backend.dto.SimilarContentDTO;
-import com.g9team10.backend.repository.SemanticSearchRepository;
+import com.g9team10.backend.api.dto.response.SimilarContentDTO;
+import com.g9team10.backend.domain.repository.SemanticSearchRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
