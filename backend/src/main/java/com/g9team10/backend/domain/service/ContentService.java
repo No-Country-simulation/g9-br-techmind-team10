@@ -9,12 +9,9 @@ import com.g9team10.backend.domain.exception.ContentNotFoundException;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.ContentChunk;
 import com.g9team10.backend.domain.model.Tag;
-import com.g9team10.backend.domain.repository.ContentChunkRepository;
-import com.g9team10.backend.domain.repository.ContentRepository;
-import com.g9team10.backend.domain.repository.SemanticSearchRepository;
-import com.g9team10.backend.domain.repository.TagRepository;
-import com.g9team10.backend.shared.TextNormalizer;
+import com.g9team10.backend.domain.repository.*;
 import com.g9team10.backend.shared.TextChunker;
+import com.g9team10.backend.shared.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +30,7 @@ public class ContentService {
     private final ContentRepository contentRepository;
     private final ContentChunkRepository contentChunkRepository;
     private final SemanticSearchRepository semanticSearchRepository;
+    private final EmbeddingGateway embeddingGateway;
 
     @Transactional
     public ContentResponseDTO analysis(ContentRequestDTO request) {
@@ -59,10 +57,10 @@ public class ContentService {
         List<String> chunks = TextChunker.split(content.getText());
         for (int i = 0; i < chunks.size(); i++) {
             ContentChunk chunk = contentChunkRepository.save(new ContentChunk(content, i, chunks.get(i)));
-            contentChunkRepository.generateEmbedding(chunk.getId(), chunk.getText());
+            embeddingGateway.generateEmbedding(chunk.getId(), chunk.getText());
         }
 
-        contentRepository.generateCentroid(content.getId());
+        embeddingGateway.generateCentroid(content.getId());
 
         return new ContentResponseDTO(
                 response.category(),

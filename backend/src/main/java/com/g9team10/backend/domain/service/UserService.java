@@ -1,10 +1,10 @@
 package com.g9team10.backend.domain.service;
 
-import com.g9team10.backend.api.dto.response.AuthResponse;
 import com.g9team10.backend.api.dto.request.LoginRequest;
 import com.g9team10.backend.api.dto.request.RegisterRequest;
-import com.g9team10.backend.domain.exception.EmailAlwaysExistsException;
+import com.g9team10.backend.api.dto.response.AuthResponse;
 import com.g9team10.backend.core.security.JwtService;
+import com.g9team10.backend.domain.exception.EmailAlwaysExistsException;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
