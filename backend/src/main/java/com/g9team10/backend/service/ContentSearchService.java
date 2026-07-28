@@ -4,7 +4,7 @@ import com.g9team10.backend.dto.ContentSearchResponseDTO;
 import com.g9team10.backend.infra.config.TrustPropertiesConfig;
 import com.g9team10.backend.model.Content;
 import com.g9team10.backend.model.Tag;
-import com.g9team10.backend.repository.ContentSearchRepository;
+import com.g9team10.backend.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ import java.util.Set;
 public class ContentSearchService {
 
     private static final Set<String> VALID_LEVELS = Set.of("basico", "intermediario", "avancado");
-    private final ContentSearchRepository contentSearchRepository;
+    private final ContentRepository contentSearchRepository;
     private final TrustPropertiesConfig trustProperties;
 
     public List<ContentSearchResponseDTO> searchByTags(List<String> tags, String level) {

@@ -3,8 +3,6 @@ package com.g9team10.backend.controller;
 import com.g9team10.backend.dto.ContentSearchResponseDTO;
 import com.g9team10.backend.service.ContentSearchService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
