@@ -37,7 +37,7 @@ public class ContentSearchController {
     )
     @GetMapping("/content/search")
     public List<ContentSearchResponseDTO> search(@RequestParam List<String> tags,
-+            @RequestParam(required = false) String level) {
+            @RequestParam(required = false) String level) {
         return contentSearchService.searchByTags(tags, level);
     }
 }
