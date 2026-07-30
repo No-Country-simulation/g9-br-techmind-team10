@@ -8,10 +8,7 @@ import com.g9team10.backend.core.config.TrustPropertiesConfig;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.repository.ContentRepository;
-import com.g9team10.backend.domain.service.ContentReviewService;
-import com.g9team10.backend.domain.service.ContentSearchService;
-import com.g9team10.backend.domain.service.ContentService;
-import com.g9team10.backend.domain.service.HistoryService;
+import com.g9team10.backend.domain.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,7 +28,7 @@ import java.util.List;
 @Tag(name = "Análise de Conteúdo", description = "Endpoint responsável pela classificação de conteúdos")
 public class ContentController {
 
-    private final ContentService contentService;
+    private final ContentCreateService contentCreateService;
     private final HistoryService historyService;
     private final TrustPropertiesConfig trustProperties;
     private final ContentReviewService contentReviewService;
@@ -53,7 +50,7 @@ public class ContentController {
     )
     @PostMapping
     public ResponseEntity<ContentResponseDTO> analysis(@RequestBody @Valid ContentRequestDTO request) {
-        return ResponseEntity.ok(ContentResponseDTO.fromEntity(contentService.analysis(request.title(), request.text())));
+        return ResponseEntity.ok(ContentResponseDTO.fromEntity(contentCreateService.create(request.title(), request.text())));
     }
 
     @Operation(
