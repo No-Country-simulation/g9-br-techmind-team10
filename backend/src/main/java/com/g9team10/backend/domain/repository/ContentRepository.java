@@ -1,6 +1,8 @@
 package com.g9team10.backend.domain.repository;
 
+import com.g9team10.backend.domain.exception.ContentNotFoundException;
 import com.g9team10.backend.domain.model.Content;
+import com.g9team10.backend.domain.model.Level;
 import com.g9team10.backend.domain.model.valueObject.CategoryCount;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +26,7 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
         AND (:level IS NULL OR c.level = :level)
         ORDER BY c.dateProcessing DESC
     """)
-    List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags, @Param("level") String level);
+    List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags, @Param("level") Level level);
 
     @Query("""
         SELECT new com.g9team10.backend.domain.model.ContentCount(
@@ -37,4 +39,8 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     """)
     List<CategoryCount> countByCategory();
 
+    default Content findRequired(Long id) {
+        return findById(id)
+                .orElseThrow(() -> new ContentNotFoundException(id));
+    }
 }

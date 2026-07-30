@@ -2,6 +2,7 @@ package com.g9team10.backend.api.controller;
 
 import com.g9team10.backend.api.dto.response.ContentDetailDTO;
 import com.g9team10.backend.core.config.TrustPropertiesConfig;
+import com.g9team10.backend.domain.model.Level;
 import com.g9team10.backend.domain.service.ContentSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,7 +40,7 @@ public class ContentSearchController {
     @GetMapping("/content/search")
     public ResponseEntity<List<ContentDetailDTO>> search(@RequestParam List<String> tags,
                                                          @RequestParam(required = false) String level) {
-        return ResponseEntity.ok(contentSearchService.searchByTags(tags, level).stream()
+        return ResponseEntity.ok(contentSearchService.searchByTags(tags, Level.valueOf(level)).stream()
                 .map(content -> ContentDetailDTO.fromEntity(content, trustProperties))
                 .toList());
     }

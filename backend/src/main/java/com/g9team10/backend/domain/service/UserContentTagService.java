@@ -5,6 +5,7 @@ import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.model.UserContentTag;
 import com.g9team10.backend.domain.model.valueObject.UserContentTagSummary;
+import com.g9team10.backend.domain.repository.ContentRepository;
 import com.g9team10.backend.domain.repository.UserContentTagRepository;
 import com.g9team10.backend.shared.TextNormalizer;
 import jakarta.transaction.Transactional;
@@ -20,10 +21,10 @@ import java.util.Map;
 public class UserContentTagService {
 
     private final UserContentTagRepository userContentTagRepository;
-    private final ContentService contentService;
+    private final ContentRepository contentRepository;
 
     public List<UserContentTag> listByContent(User user, Long contentId) {
-        contentService.find(contentId);
+        contentRepository.findRequired(contentId);
 
         return userContentTagRepository.findByUserIdAndContentIdOrderByCreatedAtAsc(
                 user.getId(),
@@ -33,7 +34,7 @@ public class UserContentTagService {
 
     @Transactional
     public UserContentTag create(User user, Long contentId, String tagName) {
-        Content content = contentService.find(contentId);
+        Content content = contentRepository.findRequired(contentId);
 
         UserContentTag tag = UserContentTag.create(user, content, tagName);
 

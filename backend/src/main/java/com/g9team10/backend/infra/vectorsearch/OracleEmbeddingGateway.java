@@ -1,4 +1,4 @@
-package com.g9team10.backend.infra.ai;
+package com.g9team10.backend.infra.vectorsearch;
 
 import com.g9team10.backend.domain.repository.EmbeddingGateway;
 import jakarta.persistence.EntityManager;

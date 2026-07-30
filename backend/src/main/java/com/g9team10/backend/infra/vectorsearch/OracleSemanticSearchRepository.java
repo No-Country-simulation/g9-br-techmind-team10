@@ -1,4 +1,4 @@
-package com.g9team10.backend.infra.persistence;
+package com.g9team10.backend.infra.vectorsearch;
 
 import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.repository.SemanticSearchRepository;

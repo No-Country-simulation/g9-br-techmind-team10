@@ -7,6 +7,9 @@ import com.g9team10.backend.api.dto.response.ContentResponseDTO;
 import com.g9team10.backend.core.config.TrustPropertiesConfig;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.model.valueObject.SimilarContent;
+import com.g9team10.backend.domain.repository.ContentRepository;
+import com.g9team10.backend.domain.service.ContentReviewService;
+import com.g9team10.backend.domain.service.ContentSearchService;
 import com.g9team10.backend.domain.service.ContentService;
 import com.g9team10.backend.domain.service.HistoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +34,9 @@ public class ContentController {
     private final ContentService contentService;
     private final HistoryService historyService;
     private final TrustPropertiesConfig trustProperties;
+    private final ContentReviewService contentReviewService;
+    private final ContentSearchService contentSearchService;
+    private final ContentRepository contentRepository;
 
     @Operation(
             summary = "Analisar conteúdo",
@@ -65,19 +71,19 @@ public class ContentController {
     )
     @GetMapping("/{id}")
     public ResponseEntity<ContentDetailDTO> getContent(@PathVariable Long id, @AuthenticationPrincipal User user) {
-        var content = contentService.find(id);
+        var content = contentRepository.findRequired(id);
         historyService.registerView(user, id);
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
     }
 
     @GetMapping("/search-similar")
     public ResponseEntity<List<SimilarContent>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
-        return ResponseEntity.ok(contentService.searchSimilar(q, limit));
+        return ResponseEntity.ok(contentSearchService.searchSimilar(q, limit));
     }
 
     @GetMapping("/{id}/recommendations")
     public ResponseEntity<List<SimilarContent>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
-        return ResponseEntity.ok(contentService.searchRecommendations(id, limit));
+        return ResponseEntity.ok(contentSearchService.searchRecommendations(id, limit));
     }
 
     @PutMapping("/{id}/tags")
@@ -85,13 +91,13 @@ public class ContentController {
             @PathVariable Long id,
             @Valid @RequestBody CorrectionTagsRequestDTO request
     ) {
-        var content = contentService.fixTags(id, request.tags());
+        var content = contentReviewService.fixTags(id, request.tags());
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
     }
 
     @PatchMapping("/{id}/tags/confirm")
     public ResponseEntity<ContentDetailDTO> confirmTags(@PathVariable Long id) {
-        var content = contentService.confirmTags(id);
+        var content = contentReviewService.confirmTags(id);
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
     }
 }

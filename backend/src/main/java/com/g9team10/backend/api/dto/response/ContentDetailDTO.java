@@ -25,7 +25,7 @@ public record ContentDetailDTO(
                 content.getTitle(),
                 content.getText(),
                 content.getCategory(),
-                content.getLevel(),
+                content.getLevel().name(),
                 content.getProbability(),
                 trustProperties.isLowConfidence(content.getProbability()),
                 content.getRevised(),

@@ -3,6 +3,7 @@ package com.g9team10.backend.domain.service;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.History;
 import com.g9team10.backend.domain.model.User;
+import com.g9team10.backend.domain.repository.ContentRepository;
 import com.g9team10.backend.domain.repository.HistoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,12 @@ import java.util.List;
 @Service
 public class HistoryService {
 
-    private final ContentService contentService;
     private final HistoryRepository historyRepository;
+    private final ContentRepository contentRepository;
 
     @Transactional
     public void registerView(User user, Long contentId) {
-        Content content = contentService.find(contentId);
+        Content content = contentRepository.findRequired(contentId);
 
         historyRepository.save(new History(user, content));
     }

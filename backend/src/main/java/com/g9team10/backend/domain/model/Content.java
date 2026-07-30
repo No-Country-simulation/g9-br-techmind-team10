@@ -44,14 +44,19 @@ public class Content {
         this.probability = probability;
     }
 
-    public void addTag(Tag tag) {
-        getTags().add(tag);
-    }
-
     public void setLevel(Level level) {
         this.level = level;
     }
     public void review() {
         this.revised = Boolean.TRUE;
+    }
+
+    public void addTags(Set<Tag> tags) {
+        this.tags.addAll(tags);
+    }
+
+    public void replaceTags(Set<Tag> tags) {
+        this.tags.clear();
+        this.tags.addAll(tags);
     }
 }

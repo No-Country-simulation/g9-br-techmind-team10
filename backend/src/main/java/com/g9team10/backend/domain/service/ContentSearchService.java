@@ -1,22 +1,24 @@
 package com.g9team10.backend.domain.service;
 
 import com.g9team10.backend.domain.model.Content;
+import com.g9team10.backend.domain.model.Level;
+import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.repository.ContentRepository;
+import com.g9team10.backend.domain.repository.SemanticSearchRepository;
 import com.g9team10.backend.shared.TextNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
 public class ContentSearchService {
 
-    private static final Set<String> VALID_LEVELS = Set.of("basico", "intermediario", "avancado");
     private final ContentRepository contentSearchRepository;
+    private final SemanticSearchRepository semanticSearchRepository;
 
-    public List<Content> searchByTags(List<String> tags, String level) {
+    public List<Content> searchByTags(List<String> tags, Level level) {
         List<String> normalized = tags.stream()
                 .map(TextNormalizer::normalize)
                 .filter(tag -> !tag.isBlank())
@@ -27,19 +29,15 @@ public class ContentSearchService {
             return List.of();
         }
 
-        String normalizedLevel = normalizeLevel(level);
-
-        return contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
+        return contentSearchRepository.findByAllTagNames(normalized, normalized.size(), level);
     }
 
-    private String normalizeLevel(String level) {
-        if (level == null || level.isBlank()) {
-            return null;
-        }
-        String normalizedLevel = TextNormalizer.normalize(level);
-        if (!VALID_LEVELS.contains(normalizedLevel)) {
-            throw new IllegalArgumentException("Nivel invalido. Use: basico, intermediario ou avancado.");
-        }
-        return normalizedLevel;
+    public List<SimilarContent> searchSimilar(String q, Integer limit) {
+        return semanticSearchRepository.searchSimilarContent(q, limit);
     }
+
+    public List<SimilarContent> searchRecommendations(Long id, Integer limit) {
+        return semanticSearchRepository.searchRecommendations(id, limit);
+    }
+
 }

@@ -14,7 +14,7 @@ public record ContentResponseDTO(String category,
                 content.getCategory(),
                 content.getProbability(),
                 content.getTags().stream().map(Tag::getName).toList(),
-                content.getLevel()
+                content.getLevel().name()
         );
     }
 }

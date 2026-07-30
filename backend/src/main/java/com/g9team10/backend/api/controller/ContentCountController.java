@@ -1,6 +1,6 @@
 package com.g9team10.backend.api.controller;
 
-import com.g9team10.backend.api.dto.response.ContentCountDTO;
+import com.g9team10.backend.domain.model.valueObject.CategoryCount;
 import com.g9team10.backend.domain.service.ContentCountService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +20,7 @@ public class ContentCountController {
     private final ContentCountService service;
 
     @GetMapping
-    public ResponseEntity<List<ContentCountDTO>> findAll() {
-        return ResponseEntity.ok(service.findAll().stream()
-                .map(c -> new ContentCountDTO(c.getCategory(), c.getTotal()))
-                .toList());
+    public ResponseEntity<List<CategoryCount>> findAll() {
+        return ResponseEntity.ok(service.findAll());
     }
 }
