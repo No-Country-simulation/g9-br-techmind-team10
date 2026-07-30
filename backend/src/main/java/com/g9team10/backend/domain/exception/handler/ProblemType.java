@@ -1,6 +1,7 @@
 package com.g9team10.backend.domain.exception.handler;
 
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 
 @Getter
 public enum ProblemType {
@@ -15,8 +16,11 @@ public enum ProblemType {
     private final String title;
     private final String uri;
 
+    @Value("${problem.base-uri}")
+    private String baseUri;
+
     ProblemType(String path, String title) {
-        this.uri = "http://localhost:8080" + path; // trocar para link de prod do back-end
+        this.uri = baseUri + path;
         this.title = title;
     }
 }

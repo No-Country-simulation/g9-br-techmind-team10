@@ -16,7 +16,7 @@ import java.util.List;
 public class User implements UserDetails{
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)
-   private Long Id;
+   private Long id;
 
    @Column(nullable = false)
    private String name;
@@ -31,7 +31,7 @@ public class User implements UserDetails{
     }
 
     public User(Long id, String name, String email, String password) {
-        Id = id;
+        this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
