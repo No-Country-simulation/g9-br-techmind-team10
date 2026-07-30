@@ -1,5 +1,6 @@
 package com.g9team10.backend.infra.ai;
 
+import com.g9team10.backend.domain.model.Level;
 import com.g9team10.backend.domain.service.LevelClassificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,13 +14,11 @@ import java.text.Normalizer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 public class GeminiLevelClassificationService implements LevelClassificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GeminiLevelClassificationService.class);
-    private static final Set<String> VALID_LEVELS = Set.of("basico", "intermediario", "avancado");
 
     private final WebClient geminiWebClient;
     private final String apiKey;
@@ -36,17 +35,13 @@ public class GeminiLevelClassificationService implements LevelClassificationServ
     }
 
     @Override
-    public String classify(String title, String text) {
+    public Level classify(String title, String text) {
         if (apiKey == null || apiKey.isBlank()) {
             return classifyByKeyword(title, text);
         }
 
         try {
-            String level = askGemini(title, text);
-            if (VALID_LEVELS.contains(level)) {
-                return level;
-            }
-            LOGGER.warn("Gemini returned an invalid level; using the local fallback.");
+            return askGemini(title, text);
         } catch (Exception exception) {
             LOGGER.warn("Gemini level classification failed; using the local fallback.", exception);
         }
@@ -54,11 +49,19 @@ public class GeminiLevelClassificationService implements LevelClassificationServ
         return classifyByKeyword(title, text);
     }
 
-    private String askGemini(String title, String text) {
+    private Level askGemini(String title, String text) {
         String prompt = """
                 Classify the difficulty level of the technical content below.
-                Reply only with one of these words and no punctuation: basico, intermediario, avancado.
-
+                Reply with exactly one of these values:
+                
+                BASIC
+                INTERMEDIATE
+                ADVANCED
+                
+                Do not include any other words.
+                Do not use punctuation.
+                Do not explain your answer.
+                
                 Title: %s
                 Text: %s
                 """.formatted(safeText(title), truncate(safeText(text), 2000));
@@ -78,10 +81,10 @@ public class GeminiLevelClassificationService implements LevelClassificationServ
                 .retryWhen(Retry.backoff(1, Duration.ofSeconds(1)))
                 .block();
 
-        return extractLevel(response);
+        return Level.from(extractResponseText(response));
     }
 
-    private String extractLevel(Map<?, ?> response) {
+    private String extractResponseText(Map<?, ?> response) {
         if (response == null) {
             return null;
         }
@@ -96,18 +99,18 @@ public class GeminiLevelClassificationService implements LevelClassificationServ
         }
 
         Object text = part.get("text");
-        return text == null ? null : normalizeLevel(text.toString());
+        return text == null ? null : text.toString();
     }
 
-    private String classifyByKeyword(String title, String text) {
+    private Level classifyByKeyword(String title, String text) {
         String content = normalizeText(safeText(title) + " " + safeText(text));
         if (containsAny(content, "iniciante", "basico", "introducao", "primeiros passos", "do zero", "fundamentos")) {
-            return "basico";
+            return Level.BASIC;
         }
         if (containsAny(content, "avancado", "arquitetura", "performance", "otimizacao", "escalabilidade", "deep dive")) {
-            return "avancado";
+            return Level.ADVANCED;
         }
-        return "intermediario";
+        return Level.INTERMEDIATE;
     }
 
     private boolean containsAny(String text, String... values) {
@@ -117,10 +120,6 @@ public class GeminiLevelClassificationService implements LevelClassificationServ
             }
         }
         return false;
-    }
-
-    private String normalizeLevel(String value) {
-        return normalizeText(value).replaceAll("[^a-z]", "");
     }
 
     private String normalizeText(String value) {

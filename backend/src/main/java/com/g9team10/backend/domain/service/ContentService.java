@@ -32,8 +32,8 @@ public class ContentService {
         ModelPredictResult response = modelPredictionService.predict(predictRequest);
 
         Content content = new Content(title, text, response.category(), response.probability());
-        String level = levelClassificationService.classify(title, text);
-        content.setLevel(Level.valueOf(level));
+        Level level = levelClassificationService.classify(title, text);
+        content.setLevel(level);
         Set<Tag> tags = tagService.resolve(response.tags());
 
         content.addTags(tags);
