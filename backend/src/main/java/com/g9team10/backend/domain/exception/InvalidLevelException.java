@@ -1,6 +1,4 @@
-package com.g9team10.backend.domain.model;
-
-import com.g9team10.backend.domain.exception.BusinessException;
+package com.g9team10.backend.domain.exception;
 
 public class InvalidLevelException extends BusinessException {
     public InvalidLevelException(String message) {

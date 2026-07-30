@@ -3,6 +3,7 @@ package com.g9team10.backend.domain.exception.handler;
 import com.g9team10.backend.domain.exception.BusinessException;
 import com.g9team10.backend.domain.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Value("${problem.base-uri}")
+    private String problemBaseUrl;
 
     private static final String GENERIC_ERROR_MESSAGE_END_USER
             = "An unexpected internal error occurred in the system. " +
@@ -120,7 +124,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return Problem.builder()
                 .timestamp(OffsetDateTime.now())
                 .status(status.value())
-                .type(problemType.getUri())
+                .type(problemBaseUrl + problemType.getPath())
                 .title(problemType.getTitle())
                 .detail(detail);
     }

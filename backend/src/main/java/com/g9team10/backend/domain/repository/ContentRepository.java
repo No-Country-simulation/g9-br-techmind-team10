@@ -29,7 +29,7 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags, @Param("level") Level level);
 
     @Query("""
-        SELECT new com.g9team10.backend.domain.model.ContentCount(
+        SELECT new com.g9team10.backend.domain.model.valueObject.CategoryCount(
             c.category,
             COUNT(c)
         )

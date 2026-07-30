@@ -14,13 +14,10 @@ public enum ProblemType {
     ;
 
     private final String title;
-    private final String uri;
-
-    @Value("${problem.base-uri}")
-    private String baseUri;
+    private final String path;
 
     ProblemType(String path, String title) {
-        this.uri = baseUri + path;
+        this.path = path;
         this.title = title;
     }
 }

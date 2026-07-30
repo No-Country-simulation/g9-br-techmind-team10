@@ -1,5 +1,6 @@
 package com.g9team10.backend.domain.model;
 
+import com.g9team10.backend.domain.exception.InvalidLevelException;
 import lombok.Getter;
 
 import java.text.Normalizer;
