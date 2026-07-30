@@ -3,6 +3,7 @@ package com.g9team10.backend.domain.service;
 import com.g9team10.backend.domain.exception.ContentNotFoundException;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.ContentChunk;
+import com.g9team10.backend.domain.model.Level;
 import com.g9team10.backend.domain.model.Tag;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
@@ -37,7 +38,7 @@ public class ContentService {
 
         Content content = new Content(title, text, response.category(), response.probability());
         String level = levelClassificationService.classify(title, text);
-        content.setLevel(level);
+        content.setLevel(Level.valueOf(level));
         List<String> tags = response.tags();
 
         if (tags != null) {

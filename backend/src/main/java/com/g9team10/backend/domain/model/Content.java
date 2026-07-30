@@ -22,7 +22,8 @@ public class Content {
     private String text;
     private String category;
     @Column(name = "knowledge_level", nullable = false, length = 20)
-    private String level = "intermediario";
+    @Enumerated(EnumType.STRING)
+    private Level level = Level.INTERMEDIATE;
     private Double probability;
     private Boolean revised = Boolean.FALSE;
     @CreationTimestamp
@@ -47,7 +48,7 @@ public class Content {
         getTags().add(tag);
     }
 
-    public void setLevel(String level) {
+    public void setLevel(Level level) {
         this.level = level;
     }
     public void review() {
