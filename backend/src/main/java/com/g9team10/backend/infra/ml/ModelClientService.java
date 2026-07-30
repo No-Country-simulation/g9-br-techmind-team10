@@ -1,5 +1,6 @@
 package com.g9team10.backend.infra.ml;
 
+import com.g9team10.backend.domain.exception.ModelPredictUnavailableException;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
 import com.g9team10.backend.domain.service.ModelPredictionService;
@@ -27,8 +28,7 @@ public class ModelClientService implements ModelPredictionService {
                     .retryWhen(Retry.backoff(1, Duration.ofSeconds(2)))
                     .block();
         } catch (Exception e) {
-            System.out.println(e.getClass().getName());
-            return null;
+            throw new ModelPredictUnavailableException(e);
         }
     }
 }
