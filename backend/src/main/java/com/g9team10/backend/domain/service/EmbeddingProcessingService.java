@@ -3,6 +3,7 @@ package com.g9team10.backend.domain.service;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.ContentChunk;
 import com.g9team10.backend.domain.repository.ContentChunkRepository;
+import com.g9team10.backend.domain.repository.ContentRepository;
 import com.g9team10.backend.domain.repository.EmbeddingGateway;
 import com.g9team10.backend.shared.TextChunker;
 import jakarta.transaction.Transactional;
@@ -17,9 +18,11 @@ public class EmbeddingProcessingService {
 
     private final ContentChunkRepository contentChunkRepository;
     private final EmbeddingGateway embeddingGateway;
+    private final ContentRepository contentRepository;
 
     @Transactional
-    public void process(Content content) {
+    public void process(Long contentId) {
+        Content content = contentRepository.findRequired(contentId);
         content.startEmbedding();
 
         try {

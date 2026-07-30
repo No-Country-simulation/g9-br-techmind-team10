@@ -40,7 +40,7 @@ public class ContentSearchController {
     @GetMapping("/content/search")
     public ResponseEntity<List<ContentDetailDTO>> search(@RequestParam List<String> tags,
                                                          @RequestParam(required = false) String level) {
-        return ResponseEntity.ok(contentSearchService.searchByTags(tags, Level.valueOf(level)).stream()
+        return ResponseEntity.ok(contentSearchService.searchByTags(tags, Level.from(level)).stream()
                 .map(content -> ContentDetailDTO.fromEntity(content, trustProperties))
                 .toList());
     }
