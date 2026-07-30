@@ -1,8 +1,8 @@
 package com.g9team10.backend.api.controller;
 
-import com.g9team10.backend.api.dto.response.AuthResponse;
 import com.g9team10.backend.api.dto.request.LoginRequest;
 import com.g9team10.backend.api.dto.request.RegisterRequest;
+import com.g9team10.backend.api.dto.response.AuthResponse;
 import com.g9team10.backend.api.dto.response.RegisterResponse;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.service.UserService;
@@ -67,7 +67,7 @@ public class UserController {
     public ResponseEntity<AuthResponse> login(
             @RequestBody @Valid LoginRequest request){
 
-        return ResponseEntity.ok(service.login(request));
+        return ResponseEntity.ok(new AuthResponse(service.login(request)));
 
 
     }

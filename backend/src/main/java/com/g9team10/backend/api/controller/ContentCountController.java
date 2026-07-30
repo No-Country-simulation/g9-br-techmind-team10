@@ -21,6 +21,8 @@ public class ContentCountController {
 
     @GetMapping
     public ResponseEntity<List<ContentCountDTO>> findAll() {
-        return ResponseEntity.ok(service.findAll());
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(c -> new ContentCountDTO(c.getCategory(), c.getTotal()))
+                .toList());
     }
 }

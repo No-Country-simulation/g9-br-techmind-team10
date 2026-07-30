@@ -1,7 +1,7 @@
 package com.g9team10.backend.infra.ml;
 
-import com.g9team10.backend.api.dto.request.ModelPredictRequestDTO;
-import com.g9team10.backend.api.dto.response.ModelPredictResponseDTO;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
 import com.g9team10.backend.domain.service.ModelPredictionService;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -13,11 +13,11 @@ import java.util.List;
 public class MockModelService implements ModelPredictionService {
 
     @Override
-    public ModelPredictResponseDTO predict(ModelPredictRequestDTO request) {
+    public ModelPredictResult predict(ModelPredictRequest request) {
         String combinedText = (request.title() + " " + request.text()).toLowerCase();
 
         if (containsAny(combinedText, "react", "html", "css", "javascript", "frontend")) {
-            return new ModelPredictResponseDTO(
+            return new ModelPredictResult(
                     "frontend",
                     0.91,
                     List.of("frontend", "html", "css", "javascript")
@@ -25,7 +25,7 @@ public class MockModelService implements ModelPredictionService {
         }
 
         if (containsAny(combinedText, "python", "pandas", "scikit", "tf-idf", "machine learning", "modelo")) {
-            return new ModelPredictResponseDTO(
+            return new ModelPredictResult(
                     "data-science",
                     0.88,
                     List.of("data-science", "python", "tf-idf", "machine-learning")
@@ -33,7 +33,7 @@ public class MockModelService implements ModelPredictionService {
         }
 
         if (containsAny(combinedText, "oci", "cloud", "docker", "compute", "bucket", "object storage")) {
-            return new ModelPredictResponseDTO(
+            return new ModelPredictResult(
                     "cloud",
                     0.86,
                     List.of("cloud", "oci", "docker", "object-storage")
@@ -41,7 +41,7 @@ public class MockModelService implements ModelPredictionService {
         }
 
         if (containsAny(combinedText, "sql", "database", "banco", "jpa", "h2", "repository")) {
-            return new ModelPredictResponseDTO(
+            return new ModelPredictResult(
                     "database",
                     0.84,
                     List.of("database", "sql", "jpa", "repository")
@@ -49,14 +49,14 @@ public class MockModelService implements ModelPredictionService {
         }
 
         if (containsAny(combinedText, "security", "token", "jwt", "senha", "autenticação", "login")) {
-            return new ModelPredictResponseDTO(
+            return new ModelPredictResult(
                     "security",
                     0.82,
                     List.of("security", "authentication", "jwt", "token", "spring-security")
             );
         }
 
-        return new ModelPredictResponseDTO(
+        return new ModelPredictResult(
                 "backend",
                 0.89,
                 List.of("backend", "java", "spring-boot", "api-rest")

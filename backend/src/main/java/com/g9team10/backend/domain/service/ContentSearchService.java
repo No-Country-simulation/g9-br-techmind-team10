@@ -1,9 +1,6 @@
 package com.g9team10.backend.domain.service;
 
-import com.g9team10.backend.api.dto.response.ContentSearchResponseDTO;
-import com.g9team10.backend.core.config.TrustPropertiesConfig;
 import com.g9team10.backend.domain.model.Content;
-import com.g9team10.backend.domain.model.Tag;
 import com.g9team10.backend.domain.repository.ContentRepository;
 import com.g9team10.backend.shared.TextNormalizer;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +15,8 @@ public class ContentSearchService {
 
     private static final Set<String> VALID_LEVELS = Set.of("basico", "intermediario", "avancado");
     private final ContentRepository contentSearchRepository;
-    private final TrustPropertiesConfig trustProperties;
 
-    public List<ContentSearchResponseDTO> searchByTags(List<String> tags, String level) {
+    public List<Content> searchByTags(List<String> tags, String level) {
         List<String> normalized = tags.stream()
                 .map(TextNormalizer::normalize)
                 .filter(tag -> !tag.isBlank())
@@ -32,21 +28,8 @@ public class ContentSearchService {
         }
 
         String normalizedLevel = normalizeLevel(level);
-        List<Content> results = contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
 
-        return results.stream()
-                .map(content -> new ContentSearchResponseDTO(
-                        content.getId(),
-                        content.getTitle(),
-                        content.getText(),
-                        content.getCategory(),
-                        content.getLevel(),
-                        content.getProbability(),
-                        trustProperties.isLowConfidence(content.getProbability()),
-                        content.getRevised(),
-                        content.getTags().stream().map(Tag::getName).toList()
-                ))
-                .toList();
+        return contentSearchRepository.findByAllTagNames(normalized, normalized.size(), normalizedLevel);
     }
 
     private String normalizeLevel(String level) {

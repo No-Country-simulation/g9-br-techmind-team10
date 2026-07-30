@@ -1,7 +1,5 @@
 package com.g9team10.backend.domain.model;
 
-import com.g9team10.backend.api.dto.request.ContentRequestDTO;
-import com.g9team10.backend.api.dto.response.ModelPredictResponseDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,11 +36,11 @@ public class Content {
     )
     private Set<Tag> tags = new HashSet<>();
 
-    public Content(ContentRequestDTO contentRequest, ModelPredictResponseDTO modelPredictResponse) {
-        this.title = contentRequest.title();
-        this.text = contentRequest.text();
-        this.category =  modelPredictResponse.category();
-        this.probability = modelPredictResponse.probability();
+    public Content(String title, String text, String category, Double probability) {
+        this.title = title;
+        this.text = text;
+        this.category = category;
+        this.probability = probability;
     }
 
     public void addTag(Tag tag) {

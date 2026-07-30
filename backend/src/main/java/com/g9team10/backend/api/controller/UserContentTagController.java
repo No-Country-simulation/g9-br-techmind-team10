@@ -1,12 +1,12 @@
 package com.g9team10.backend.api.controller;
 
-import com.g9team10.backend.api.dto.response.ContentSummaryDTO;
 import com.g9team10.backend.api.dto.request.UserContentTagRequestDTO;
+import com.g9team10.backend.api.dto.response.ContentSummaryDTO;
 import com.g9team10.backend.api.dto.response.UserContentTagResponseDTO;
-import com.g9team10.backend.api.dto.response.UserContentTagSummaryDTO;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.model.UserContentTag;
+import com.g9team10.backend.domain.model.valueObject.UserContentTagSummary;
 import com.g9team10.backend.domain.service.UserContentTagService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -45,7 +45,7 @@ public class UserContentTagController {
             @RequestBody @Valid UserContentTagRequestDTO request,
             @AuthenticationPrincipal User user
     ) {
-        UserContentTag tag = userContentTagService.create(user, contentId, request);
+        UserContentTag tag = userContentTagService.create(user, contentId, request.name());
 
         return ResponseEntity.ok(UserContentTagResponseDTO.fromEntity(tag));
     }
@@ -62,7 +62,7 @@ public class UserContentTagController {
     }
 
     @GetMapping("/personal-tags")
-    public ResponseEntity<List<UserContentTagSummaryDTO>> listUserTags(
+    public ResponseEntity<List<UserContentTagSummary>> listUserTags(
             @AuthenticationPrincipal User user
     ) {
         return ResponseEntity.ok(userContentTagService.listUserTags(user));

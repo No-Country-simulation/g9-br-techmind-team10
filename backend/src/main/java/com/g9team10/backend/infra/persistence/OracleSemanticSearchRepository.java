@@ -1,6 +1,6 @@
 package com.g9team10.backend.infra.persistence;
 
-import com.g9team10.backend.api.dto.response.SimilarContentDTO;
+import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.repository.SemanticSearchRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class OracleSemanticSearchRepository implements SemanticSearchRepository 
     private final EntityManager entityManager;
 
     @Override
-    public List<SimilarContentDTO> searchSimilarContent(String query, int limit) {
+    public List<SimilarContent> searchSimilarContent(String query, int limit) {
         String sql = """
                 WITH ranked_posts AS (
                     SELECT
@@ -60,7 +60,7 @@ public class OracleSemanticSearchRepository implements SemanticSearchRepository 
                 .map(row -> {
                     Clob clob = (Clob) row[2];
                     try {
-                        return new SimilarContentDTO(
+                        return new SimilarContent(
                                 ((Number) row[0]).longValue(),
                                 (String) row[1],
                                 clob.getSubString(1, (int) clob.length()),
@@ -74,7 +74,7 @@ public class OracleSemanticSearchRepository implements SemanticSearchRepository 
     }
 
     @Override
-    public List<SimilarContentDTO> searchRecommendations(Long id, Integer limit) {
+    public List<SimilarContent> searchRecommendations(Long id, Integer limit) {
         String sql = """
                 WITH source AS (
                     SELECT embedding_centroid
@@ -109,7 +109,7 @@ public class OracleSemanticSearchRepository implements SemanticSearchRepository 
                 .map(row -> {
                     Clob clob = (Clob) row[2];
                     try {
-                        return new SimilarContentDTO(
+                        return new SimilarContent(
                                 ((Number) row[0]).longValue(),
                                 (String) row[1],
                                 clob.getSubString(1, (int) clob.length()),

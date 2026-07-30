@@ -1,6 +1,6 @@
-package com.g9team10.backend.api.dto.response;
+package com.g9team10.backend.domain.model.valueObject;
 
-public record SimilarContentDTO(
+public record SimilarContent(
         Long id,
         String title,
         String content,

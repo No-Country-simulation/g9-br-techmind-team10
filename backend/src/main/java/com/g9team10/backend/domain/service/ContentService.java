@@ -1,14 +1,12 @@
 package com.g9team10.backend.domain.service;
 
-import com.g9team10.backend.api.dto.request.ContentRequestDTO;
-import com.g9team10.backend.api.dto.request.ModelPredictRequestDTO;
-import com.g9team10.backend.api.dto.response.ContentResponseDTO;
-import com.g9team10.backend.api.dto.response.ModelPredictResponseDTO;
-import com.g9team10.backend.api.dto.response.SimilarContentDTO;
 import com.g9team10.backend.domain.exception.ContentNotFoundException;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.ContentChunk;
 import com.g9team10.backend.domain.model.Tag;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
+import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.repository.*;
 import com.g9team10.backend.shared.TextChunker;
 import com.g9team10.backend.shared.TextNormalizer;
@@ -33,12 +31,12 @@ public class ContentService {
     private final EmbeddingGateway embeddingGateway;
 
     @Transactional
-    public ContentResponseDTO analysis(ContentRequestDTO request) {
-        ModelPredictRequestDTO predictRequest = new ModelPredictRequestDTO(request.title(), request.text());
-        ModelPredictResponseDTO response = modelPredictionService.predict(predictRequest);
+    public Content analysis(String title, String text) {
+        ModelPredictRequest predictRequest = new ModelPredictRequest(title, text);
+        ModelPredictResult response = modelPredictionService.predict(predictRequest);
 
-        Content content = new Content(request, response);
-        String level = levelClassificationService.classify(request.title(), request.text());
+        Content content = new Content(title, text, response.category(), response.probability());
+        String level = levelClassificationService.classify(title, text);
         content.setLevel(level);
         List<String> tags = response.tags();
 
@@ -62,12 +60,7 @@ public class ContentService {
 
         embeddingGateway.generateCentroid(content.getId());
 
-        return new ContentResponseDTO(
-                response.category(),
-                response.probability(),
-                response.tags(),
-                level
-        );
+        return content;
     }
 
     public Content find(Long contentId) {
@@ -101,11 +94,11 @@ public class ContentService {
         return contentRepository.save(content);
     }
 
-    public List<SimilarContentDTO> searchSimilar(String q, Integer limit) {
+    public List<SimilarContent> searchSimilar(String q, Integer limit) {
         return semanticSearchRepository.searchSimilarContent(q, limit);
     }
 
-    public List<SimilarContentDTO> searchRecommendations(Long id, Integer limit) {
+    public List<SimilarContent> searchRecommendations(Long id, Integer limit) {
         return semanticSearchRepository.searchRecommendations(id, limit);
     }
 

@@ -1,12 +1,12 @@
 package com.g9team10.backend.api.controller;
 
-import com.g9team10.backend.api.dto.response.ContentDetailDTO;
 import com.g9team10.backend.api.dto.request.ContentRequestDTO;
-import com.g9team10.backend.api.dto.response.ContentResponseDTO;
-import com.g9team10.backend.api.dto.response.SimilarContentDTO;
 import com.g9team10.backend.api.dto.request.CorrectionTagsRequestDTO;
+import com.g9team10.backend.api.dto.response.ContentDetailDTO;
+import com.g9team10.backend.api.dto.response.ContentResponseDTO;
 import com.g9team10.backend.core.config.TrustPropertiesConfig;
 import com.g9team10.backend.domain.model.User;
+import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.service.ContentService;
 import com.g9team10.backend.domain.service.HistoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +47,7 @@ public class ContentController {
     )
     @PostMapping
     public ResponseEntity<ContentResponseDTO> analysis(@RequestBody @Valid ContentRequestDTO request) {
-        return ResponseEntity.ok(contentService.analysis(request));
+        return ResponseEntity.ok(ContentResponseDTO.fromEntity(contentService.analysis(request.title(), request.text())));
     }
 
     @Operation(
@@ -71,12 +71,12 @@ public class ContentController {
     }
 
     @GetMapping("/search-similar")
-    public ResponseEntity<List<SimilarContentDTO>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
+    public ResponseEntity<List<SimilarContent>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
         return ResponseEntity.ok(contentService.searchSimilar(q, limit));
     }
 
     @GetMapping("/{id}/recommendations")
-    public ResponseEntity<List<SimilarContentDTO>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
+    public ResponseEntity<List<SimilarContent>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
         return ResponseEntity.ok(contentService.searchRecommendations(id, limit));
     }
 

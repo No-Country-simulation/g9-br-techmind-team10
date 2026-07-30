@@ -1,7 +1,7 @@
 package com.g9team10.backend.domain.repository;
 
-import com.g9team10.backend.api.dto.response.ContentCountDTO;
 import com.g9team10.backend.domain.model.Content;
+import com.g9team10.backend.domain.model.valueObject.CategoryCount;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +27,7 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     List<Content> findByAllTagNames(@Param("tags") List<String> tags, @Param("qtdTags") long qtdTags, @Param("level") String level);
 
     @Query("""
-        SELECT new com.g9team10.backend.api.dto.response.ContentCountDTO(
+        SELECT new com.g9team10.backend.domain.model.ContentCount(
             c.category,
             COUNT(c)
         )
@@ -35,6 +35,6 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
         GROUP BY c.category
         ORDER BY c.category
     """)
-    List<ContentCountDTO> countByCategory();
+    List<CategoryCount> countByCategory();
 
 }

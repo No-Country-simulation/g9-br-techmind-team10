@@ -1,7 +1,7 @@
 package com.g9team10.backend.infra.ml;
 
-import com.g9team10.backend.api.dto.request.ModelPredictRequestDTO;
-import com.g9team10.backend.api.dto.response.ModelPredictResponseDTO;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
+import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
 import com.g9team10.backend.domain.service.ModelPredictionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,13 +17,13 @@ public class ModelClientService implements ModelPredictionService {
     private final WebClient webClient;
 
     @Override
-    public ModelPredictResponseDTO predict(ModelPredictRequestDTO request) {
+    public ModelPredictResult predict(ModelPredictRequest request) {
         try {
             return webClient.post()
                     .uri("/predict")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(ModelPredictResponseDTO.class)
+                    .bodyToMono(ModelPredictResult.class)
                     .retryWhen(Retry.backoff(1, Duration.ofSeconds(2)))
                     .block();
         } catch (Exception e) {

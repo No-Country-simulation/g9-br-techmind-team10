@@ -2,7 +2,6 @@ package com.g9team10.backend.domain.service;
 
 import com.g9team10.backend.api.dto.request.LoginRequest;
 import com.g9team10.backend.api.dto.request.RegisterRequest;
-import com.g9team10.backend.api.dto.response.AuthResponse;
 import com.g9team10.backend.core.security.JwtService;
 import com.g9team10.backend.domain.exception.EmailAlwaysExistsException;
 import com.g9team10.backend.domain.model.User;
@@ -38,7 +37,7 @@ public class UserService {
     }
 
 
-    public AuthResponse login(LoginRequest dto) {
+    public String login(LoginRequest dto) {
 
         User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
@@ -47,9 +46,7 @@ public class UserService {
             throw new BadCredentialsException("Incorrect email or password");
         }
 
-        String token = jwtService.gerarToken(user);
-
-        return new AuthResponse(token);
+        return jwtService.gerarToken(user);
 
     }
 }

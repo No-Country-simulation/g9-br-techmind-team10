@@ -1,5 +1,7 @@
 package com.g9team10.backend.domain.model;
 
+import com.g9team10.backend.domain.exception.InvalidUserContentTagException;
+import com.g9team10.backend.shared.TextNormalizer;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,5 +50,21 @@ public class UserContentTag {
         this.content = content;
         this.name = name;
         this.normalizedName = normalizedName;
+    }
+
+    public static UserContentTag create(User user, Content content, String name) {
+        String displayName = normalizeDisplayName(name);
+        return new UserContentTag(user, content, displayName, TextNormalizer.normalize(name));
+    }
+
+    public static String normalizeDisplayName(String value) {
+        String displayName = value == null ? "" : value.trim().replaceAll("\\s+", " ");
+
+        if (displayName.isBlank()) {
+            throw new InvalidUserContentTagException();
+        }
+
+        return displayName;
+
     }
 }
