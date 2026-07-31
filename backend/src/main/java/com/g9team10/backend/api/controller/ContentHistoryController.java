@@ -21,7 +21,7 @@ public class ContentHistoryController {
     private final HistoryService historyService;
 
     @GetMapping
-    public ResponseEntity<List<ContentSummaryDTO>> listFavorites(@AuthenticationPrincipal User user){
+    public ResponseEntity<List<ContentSummaryDTO>> listHistory(@AuthenticationPrincipal User user){
         List<Content> history = historyService.list(user.getId());
         List<ContentSummaryDTO> response = history.stream()
                 .map(ContentSummaryDTO::fromEntity)

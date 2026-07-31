@@ -33,7 +33,6 @@ public class ContentController {
     private final ContentCreateService contentCreateService;
     private final TrustPropertiesConfig trustProperties;
     private final ContentReviewService contentReviewService;
-    private final ContentSearchService contentSearchService;
     private final ContentViewService contentViewService;
 
     @Operation(
@@ -73,16 +72,6 @@ public class ContentController {
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
     }
 
-    @GetMapping("/search-similar")
-    public ResponseEntity<List<SimilarContent>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
-        return ResponseEntity.ok(contentSearchService.searchSimilar(q, limit));
-    }
-
-    @GetMapping("/{id}/recommendations")
-    public ResponseEntity<List<SimilarContent>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
-        return ResponseEntity.ok(contentSearchService.searchRecommendations(id, limit));
-    }
-
     @PutMapping("/{id}/tags")
     public ResponseEntity<ContentDetailDTO> fixTags(
             @PathVariable Long id,
@@ -92,7 +81,7 @@ public class ContentController {
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));
     }
 
-    @PatchMapping("/{id}/tags/confirm")
+    @PostMapping("/{id}/tags/confirm")
     public ResponseEntity<ContentDetailDTO> confirmTags(@PathVariable Long id) {
         var content = contentReviewService.confirmTags(id);
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));

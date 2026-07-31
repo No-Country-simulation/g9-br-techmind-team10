@@ -66,7 +66,7 @@ public class Content extends AbstractAggregateRoot<Content> {
     }
 
     public void created() {
-        registerEvent(new ContentCreatedEvent(id));
+        registerEvent(new ContentCreatedEvent(this));
     }
 
     public void startEmbedding() {

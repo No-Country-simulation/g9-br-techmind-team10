@@ -8,6 +8,7 @@ import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +40,12 @@ public class UserController {
             description = "Dados inválidos ou e-mail já cadastrado"
     )
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponse register(
+    @SecurityRequirements
+    public ResponseEntity<RegisterResponse> register(
             @RequestBody @Valid RegisterRequest request) {
 
         User user = service.register(request);
-        return new RegisterResponse(user.getName(), user.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new RegisterResponse(user.getName(), user.getEmail()));
     }
 
     @Operation(
@@ -64,6 +65,7 @@ public class UserController {
             description = "Acesso não autorizado!"
     )
     @PostMapping("/login")
+    @SecurityRequirements
     public ResponseEntity<AuthResponse> login(
             @RequestBody @Valid LoginRequest request){
 

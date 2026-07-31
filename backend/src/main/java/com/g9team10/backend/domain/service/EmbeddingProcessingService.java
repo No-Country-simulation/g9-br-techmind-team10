@@ -25,22 +25,27 @@ public class EmbeddingProcessingService {
     public void process(Long contentId) {
         Content content = contentRepository.findRequired(contentId);
         content.startEmbedding();
+        contentRepository.saveAndFlush(content);
 
         try {
-            List<String> chunks = TextChunker.split(content.getText());
-            List<ContentChunk> contentChunks = new ArrayList<>();
-            for (int i = 0; i < chunks.size(); i++) {
-                contentChunks.add(new ContentChunk(content, i, chunks.get(i)));
-            }
-            contentChunkRepository.saveAll(contentChunks);
-
-            embeddingGateway.generateEmbeddingForContent(contentId);
-            embeddingGateway.generateCentroid(content.getId());
+            generateEmbeddings(content);
 
             content.completeEmbedding();
         } catch (Exception e) {
             content.failEmbedding();
             throw e;
         }
+    }
+
+    private void generateEmbeddings(Content content) {
+        List<String> chunks = TextChunker.split(content.getText());
+        List<ContentChunk> contentChunks = new ArrayList<>();
+        for (int i = 0; i < chunks.size(); i++) {
+            contentChunks.add(new ContentChunk(content, i, chunks.get(i)));
+        }
+        contentChunkRepository.saveAll(contentChunks);
+
+        embeddingGateway.generateEmbeddingForContent(content.getId());
+        embeddingGateway.generateCentroid(content.getId());
     }
 }

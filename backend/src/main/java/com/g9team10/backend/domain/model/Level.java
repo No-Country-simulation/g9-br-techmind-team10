@@ -24,6 +24,12 @@ public enum Level {
         }
     }
 
+    public static Level fromNullable(String value) {
+        return (value == null || value.isBlank())
+                ? null
+                : from(value);
+    }
+
     private static String normalize(String value) {
         return Normalizer.normalize(value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")

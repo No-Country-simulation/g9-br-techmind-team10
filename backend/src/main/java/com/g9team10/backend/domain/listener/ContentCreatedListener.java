@@ -17,6 +17,6 @@ public class ContentCreatedListener {
     @Async("embeddingExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onContentCreated(ContentCreatedEvent event) {
-        embeddingProcessingService.process(event.contentId());
+        embeddingProcessingService.process(event.content().getId());
     }
 }

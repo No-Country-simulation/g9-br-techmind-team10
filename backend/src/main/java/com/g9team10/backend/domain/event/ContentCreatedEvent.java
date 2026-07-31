@@ -1,4 +1,6 @@
 package com.g9team10.backend.domain.event;
 
-public record ContentCreatedEvent(Long contentId) {
+import com.g9team10.backend.domain.model.Content;
+
+public record ContentCreatedEvent(Content content) {
 }
