@@ -6,7 +6,6 @@ import com.g9team10.backend.api.dto.response.UserContentTagResponseDTO;
 import com.g9team10.backend.domain.model.Content;
 import com.g9team10.backend.domain.model.User;
 import com.g9team10.backend.domain.model.UserContentTag;
-import com.g9team10.backend.domain.model.valueObject.UserContentTagSummary;
 import com.g9team10.backend.domain.service.UserContentTagService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -59,13 +58,6 @@ public class UserContentTagController {
         userContentTagService.delete(user, contentId, tagId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/personal-tags")
-    public ResponseEntity<List<UserContentTagSummary>> listUserTags(
-            @AuthenticationPrincipal User user
-    ) {
-        return ResponseEntity.ok(userContentTagService.listUserTags(user));
     }
 
     @GetMapping("/personal-tags/search")

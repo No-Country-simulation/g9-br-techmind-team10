@@ -6,10 +6,8 @@ import com.g9team10.backend.api.dto.response.ContentDetailDTO;
 import com.g9team10.backend.api.dto.response.ContentResponseDTO;
 import com.g9team10.backend.core.config.TrustPropertiesConfig;
 import com.g9team10.backend.domain.model.User;
-import com.g9team10.backend.domain.model.valueObject.SimilarContent;
 import com.g9team10.backend.domain.service.ContentCreateService;
 import com.g9team10.backend.domain.service.ContentReviewService;
-import com.g9team10.backend.domain.service.ContentSearchService;
 import com.g9team10.backend.domain.service.ContentViewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
