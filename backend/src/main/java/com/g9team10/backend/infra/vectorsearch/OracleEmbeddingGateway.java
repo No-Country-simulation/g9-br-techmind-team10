@@ -12,19 +12,19 @@ public class OracleEmbeddingGateway implements EmbeddingGateway {
     private final EntityManager entityManager;
 
     @Override
-    public void generateEmbedding(Long chunkId, String text) {
+    public void generateEmbeddingForContent(Long contentId) {
         entityManager.createNativeQuery("""
                         UPDATE content_chunk
-                        SET embedding = VECTOR_EMBEDDING(MULTILINGUAL_EMBED USING CONCAT('passage: ', :text) AS DATA)
-                        WHERE id = :id
+                        SET embedding = VECTOR_EMBEDDING(MULTILINGUAL_EMBED USING CONCAT('passage: ', text) AS DATA)
+                        WHERE content_id = :contentId
+                            AND embedding IS NULL
                         """)
-                .setParameter("id", chunkId)
-                .setParameter("text", text)
+                .setParameter("contentId", contentId)
                 .executeUpdate();
     }
 
     @Override
-    public void generateCentroid(Long chunkId) {
+    public void generateCentroid(Long contentId) {
         entityManager.createNativeQuery("""
                 UPDATE content c
                 SET embedding_centroid = (
@@ -34,7 +34,7 @@ public class OracleEmbeddingGateway implements EmbeddingGateway {
                 )
                 WHERE c.id = :id
                 """)
-                .setParameter("id", chunkId)
+                .setParameter("id", contentId)
                 .executeUpdate();
     }
 }

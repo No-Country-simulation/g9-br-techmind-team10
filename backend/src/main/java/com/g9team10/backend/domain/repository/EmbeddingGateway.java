@@ -1,7 +1,7 @@
 package com.g9team10.backend.domain.repository;
 
 public interface EmbeddingGateway {
-    void generateEmbedding(Long chunkId, String text);
+    void generateEmbeddingForContent(Long contentId);
 
-    void generateCentroid(Long chunkId);
+    void generateCentroid(Long contentId);
 }

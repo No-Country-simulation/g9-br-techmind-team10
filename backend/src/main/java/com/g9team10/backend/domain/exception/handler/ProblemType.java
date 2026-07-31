@@ -1,7 +1,6 @@
 package com.g9team10.backend.domain.exception.handler;
 
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
 
 @Getter
 public enum ProblemType {

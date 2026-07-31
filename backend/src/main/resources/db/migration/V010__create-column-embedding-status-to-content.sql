@@ -1,2 +1,2 @@
 ALTER TABLE content
-   ADD embedding_status VARCHAR2(20) NOT NULL;
+   ADD embedding_status VARCHAR2(20) DEFAULT 'PENDING' NOT NULL;

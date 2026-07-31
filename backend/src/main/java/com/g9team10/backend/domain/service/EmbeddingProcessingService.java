@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,11 +28,13 @@ public class EmbeddingProcessingService {
 
         try {
             List<String> chunks = TextChunker.split(content.getText());
+            List<ContentChunk> contentChunks = new ArrayList<>();
             for (int i = 0; i < chunks.size(); i++) {
-                ContentChunk chunk = contentChunkRepository.save(new ContentChunk(content, i, chunks.get(i)));
-                embeddingGateway.generateEmbedding(chunk.getId(), chunk.getText());
+                contentChunks.add(new ContentChunk(content, i, chunks.get(i)));
             }
+            contentChunkRepository.saveAll(contentChunks);
 
+            embeddingGateway.generateEmbeddingForContent(contentId);
             embeddingGateway.generateCentroid(content.getId());
 
             content.completeEmbedding();
