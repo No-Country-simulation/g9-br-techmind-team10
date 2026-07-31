@@ -27,3 +27,37 @@ Integração e entrega contínua configurada com GitHub Actions. O pipeline é a
 
 5. Deploy
 A aplicação é containerizada utilizando Docker. Deploy realizado na Oracle Cloud Infrastructure (OCI).
+```
+
+## 4. Como fazer o Cadastro e Login
+
+Rota para o Cadastro:
+- POST auth/register
+```bash
+{
+    "name": "Carlos",
+    "email": "carlos@email.com",
+    "password": "654321"
+}
+````
+
+Rota para o Login:
+- POST auth/login
+```bash
+{
+    "email": "carlos@email.com",
+    "password": "654321"
+}
+````
+
+Após o Login, ele ira retornar um TOKEN, use esse TOKEN para liberar rotas bloqueadas. **Bearer Token** é o nome do tipo de autentificação.
+
+## 5. Acessando o Swagger localmente
+
+- 1: Rode o projeto
+- 2 : Acesse o Link a baixo
+    ````bash
+      http://localhost:8080/swagger-ui/index.html
+    ````
+- 3: Use os endpoints para fazer os testes.
+- 4: Cada endpoint possui uma descrição de como usa-lás

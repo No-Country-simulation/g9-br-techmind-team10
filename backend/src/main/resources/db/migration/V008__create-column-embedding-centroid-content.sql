@@ -1,0 +1,1 @@
+ALTER TABLE content ADD embedding_centroid VECTOR(768, FLOAT32);
