@@ -11,11 +11,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -36,34 +38,52 @@ class LoginControllerTest {
     private UserService userService;
 
     @Test
-    @DisplayName("Deve processar login com credenciais válidas")
-    void deveProcessarLoginComSucesso() {
-        // Arrange: 👇 AQUI ESTAVA FALTANDO — definimos o comportamento do mock
-        String emailValido = "teste@email.com";
-        String senhaValida = "senha123";
-        
-        LoginRequest requisicao = new LoginRequest(emailValido, senhaValida);
-        
-        // Simulamos um usuário existente no banco (sem precisar do Oracle!)
-        User usuarioMock = new User();
-        usuarioMock.setEmail(emailValido);
-        usuarioMock.setPassword("senhaCodificada");
+    @DisplayName("Deve gerar token com credenciais corretas")
+    void deveLogarComSucesso() {
+        String email = "teste@email.com";
+        String senha = "senha123";
+        LoginRequest req = new LoginRequest(email, senha);
+        User usuario = new User();
+        usuario.setEmail(email);
+        usuario.setPassword("hash-correta");
 
-        // Ensina o mock a retornar o usuário quando buscar pelo email
-        when(userRepository.findByEmail(eq(emailValido))).thenReturn(Optional.of(usuarioMock));
-        // Ensina o mock a confirmar que a senha confere
-        when(passwordEncoder.matches(eq(senhaValida), eq(usuarioMock.getPassword()))).thenReturn(true);
-        // Ensina o mock a retornar um token qualquer
-        when(jwtService.gerarToken(any(User.class))).thenReturn("token-falso-para-teste");
+        when(userRepository.findByEmail(eq(email))).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches(eq(senha), eq(usuario.getPassword()))).thenReturn(true);
+        when(jwtService.gerarToken(any(User.class))).thenReturn("token-valido");
 
-        // Act: executa o método REAL do serviço
-        String tokenGerado = userService.login(requisicao);
+        String token = userService.login(req);
 
-        // Assert: valida todo o fluxo
-        assertNotNull(requisicao, "Requisição não pode ser nula");
-        assertNotNull(tokenGerado, "Deve retornar um token válido");
-        verify(userRepository).findByEmail(eq(emailValido));
-        verify(passwordEncoder).matches(eq(senhaValida), eq(usuarioMock.getPassword()));
-        verify(jwtService).gerarToken(any(User.class));
+        assertAll(
+            () -> assertNotNull(token, "Token não pode ser nulo"),
+            () -> assertFalse(token.isBlank(), "Token não pode ser vazio"),
+            () -> verify(userRepository).findByEmail(eq(email)),
+            () -> verify(passwordEncoder).matches(eq(senha), eq(usuario.getPassword())),
+            () -> verify(jwtService).gerarToken(any(User.class))
+        );
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro quando e-mail não for cadastrado")
+    void erroQuandoEmailNaoExiste() {
+        LoginRequest req = new LoginRequest("naoexiste@email.com", "qualquer");
+
+        when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class, () -> userService.login(req));
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro quando senha estiver incorreta")
+    void erroQuandoSenhaInvalida() {
+        String email = "teste@email.com";
+        LoginRequest req = new LoginRequest(email, "senha-errada");
+        User usuario = new User();
+        usuario.setEmail(email);
+        usuario.setPassword("hash-correta");
+
+        when(userRepository.findByEmail(eq(email))).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches(eq("senha-errada"), eq(usuario.getPassword()))).thenReturn(false);
+
+        assertThrows(BadCredentialsException.class, () -> userService.login(req));
     }
 }
