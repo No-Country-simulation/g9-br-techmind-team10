@@ -69,6 +69,19 @@ public class ContentController {
     }
 
     @PutMapping("/{id}/tags")
+    @Operation(
+            summary = "Corrigi as Tags",
+            description = "Permitir que um usuário autenticado corrija as tags associadas a um conteúdo quando a classificação automática do sistema não estiver adequada."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Tags corrigidas!"
+
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Tags não foram corrigidas!"
+    )
     public ResponseEntity<ContentDetailDTO> fixTags(
             @PathVariable Long id,
             @Valid @RequestBody CorrectionTagsRequestDTO request
@@ -78,6 +91,18 @@ public class ContentController {
     }
 
     @PostMapping("/{id}/tags/confirm")
+    @Operation(
+            summary = "Confirma as Tags",
+            description = "Permitir que o usuário confirme que as tags sugeridas automaticamente pelo sistema estão corretas, sem precisar enviar uma nova lista de tags."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Tags confirmadas"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Tags não confirmadas"
+    )
     public ResponseEntity<ContentDetailDTO> confirmTags(@PathVariable Long id) {
         var content = contentReviewService.confirmTags(id);
         return ResponseEntity.ok(ContentDetailDTO.fromEntity(content, trustProperties));

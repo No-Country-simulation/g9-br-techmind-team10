@@ -46,11 +46,39 @@ public class ContentSearchController {
     }
 
     @GetMapping("/search-similar")
+    @Operation(
+            summary = "Busca conteúdo similar",
+            description = "Permitir que um usuário autenticado encontre conteúdos tecnicamente relacionados a partir de uma pesquisa por linguagem natural."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Conteúdo foi achado com sucesso!"
+
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Erro ao buscar o conteúdo"
+
+    )
     public ResponseEntity<List<SimilarContent>> search(@RequestParam String q, @RequestParam(defaultValue = "10") Integer limit) {
         return ResponseEntity.ok(contentSearchService.searchSimilar(q, limit));
     }
 
     @GetMapping("/{id}/recommendations")
+    @Operation(
+            summary = "Dá recomedação de busca"
+
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "Recomendação foi recebida com secesso!"
+
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Erro ao dar recomedação"
+
+    )
     public ResponseEntity<List<SimilarContent>> recommendations(@PathVariable Long id, @RequestParam(defaultValue = "6") Integer limit) {
         return ResponseEntity.ok(contentSearchService.searchRecommendations(id, limit));
     }
