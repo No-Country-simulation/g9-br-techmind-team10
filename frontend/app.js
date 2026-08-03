@@ -13,6 +13,7 @@ const screens = {
   submit: document.querySelector("#submit-screen"),
   auth: document.querySelector("#auth-screen"),
   success: document.querySelector("#success-screen"),
+  profile: document.querySelector("#profile-screen"),
   document: document.querySelector("#document-screen")
 };
 
@@ -20,6 +21,7 @@ const catalogForm = document.querySelector("#catalog-form");
 const catalogSubmitButton = document.querySelector("#catalog-submit-button");
 const contentFeedback = document.querySelector("#content-feedback");
 
+const toolbarCard = document.querySelector(".toolbar-card");
 const searchInput = document.querySelector("#library-search");
 const tagSuggestions = document.querySelector("#tag-suggestions");
 const toggleSearchButton = document.querySelector("#toggle-search");
@@ -29,6 +31,8 @@ const tagSearchControls = document.querySelector("#tag-search-controls");
 const semanticSearchPanel = document.querySelector("#semantic-search-panel");
 const semanticSearchInput = document.querySelector("#semantic-search-input");
 const searchModeHelper = document.querySelector("#search-mode-helper");
+const levelFilterPanel = document.querySelector("#level-filter-panel");
+const levelFilter = document.querySelector("#level-filter");
 const tagGroupList = document.querySelector("#tag-group-list");
 const subtagSection = document.querySelector("#subtag-section");
 const subtagList = document.querySelector("#subtag-list");
@@ -45,8 +49,19 @@ const favoritesButton = document.querySelector("#favorites-button");
 const documentCategory = document.querySelector("#document-category");
 const documentTitle = document.querySelector("#document-title");
 const documentTags = document.querySelector("#document-tags");
+const documentLevel = document.querySelector("#document-level");
 const documentText = document.querySelector("#document-text");
 const documentFavoriteButton = document.querySelector("#document-favorite-button");
+const personalTagsToggleButton = document.querySelector("#personal-tags-toggle-button");
+const personalTagsPanel = document.querySelector("#document-personal-tags-panel");
+const personalTagForm = document.querySelector("#personal-tag-form");
+const personalTagInput = document.querySelector("#personal-tag-input");
+const personalTagSubmitButton = document.querySelector("#personal-tag-submit-button");
+const personalTagsList = document.querySelector("#personal-tags-list");
+const personalTagsEmpty = document.querySelector("#personal-tags-empty");
+const relatedContentsSection = document.querySelector("#related-contents-section");
+const relatedContentGrid = document.querySelector("#related-content-grid");
+const relatedEmpty = document.querySelector("#related-empty");
 const documentFeedback = document.querySelector("#document-feedback");
 const documentReviewPanel = document.querySelector("#document-review-panel");
 const documentReviewTitle = document.querySelector("#document-review-title");
@@ -63,6 +78,14 @@ const correctionTagsButton = document.querySelector("#correction-tags-button");
 
 const authActionButton = document.querySelector("#auth-action-button");
 const userStatus = document.querySelector("#user-status");
+const profileEmail = document.querySelector("#profile-email");
+const refreshProfileTagsButton = document.querySelector("#refresh-profile-tags-button");
+const profilePersonalTagsList = document.querySelector("#profile-personal-tags-list");
+const profileTagsEmpty = document.querySelector("#profile-tags-empty");
+const profileResultsTitle = document.querySelector("#profile-results-title");
+const profileResultCount = document.querySelector("#profile-result-count");
+const profileContentGrid = document.querySelector("#profile-content-grid");
+const profileResultsEmpty = document.querySelector("#profile-results-empty");
 const authForm = document.querySelector("#auth-form");
 const loginTab = document.querySelector("#login-tab");
 const registerTab = document.querySelector("#register-tab");
@@ -86,11 +109,21 @@ let selectedTags = [];
 let appliedTags = [];
 let searchMode = "tags";
 let appliedSemanticQuery = "";
+let appliedLevel = "";
 let loadedContents = [];
 let hasSearched = false;
 let isLoadingContents = false;
 let libraryErrorMessage = "";
 let currentListMode = "search";
+let savedLibrarySearchState = null;
+let appliedPersonalTag = "";
+let profilePersonalTags = [];
+let isLoadingProfileTags = false;
+let profileTagsErrorMessage = "";
+let profileSelectedTag = "";
+let profileTagResults = [];
+let isLoadingProfileResults = false;
+let profileResultsErrorMessage = "";
 let currentDocument = null;
 let favoriteContentIds = new Set();
 let isLoadingDocument = false;
@@ -98,6 +131,13 @@ let authMode = "login";
 let correctionSelectedTags = [];
 let correctionActiveGroupKey = "";
 let isReviewActionLoading = false;
+let arePersonalTagsVisible = false;
+let currentPersonalTags = [];
+let isLoadingPersonalTags = false;
+let isPersonalTagActionLoading = false;
+let relatedContents = [];
+let isLoadingRecommendations = false;
+let recommendationsErrorMessage = "";
 
 function getSession() {
   const saved = localStorage.getItem(authStorageKey);
@@ -151,6 +191,44 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .replaceAll("-", " ")
     .trim();
+}
+
+function getPersonalTagSearchKey(value) {
+  return normalizeText(value)
+    .replace(/\s+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getPersonalTagName(tag) {
+  if (typeof tag === "string") {
+    return tag;
+  }
+
+  return tag?.name || tag?.label || tag?.normalizedName || tag?.tagName || tag?.tag || "Tag personalizada";
+}
+
+function getPersonalTagKey(tag) {
+  if (typeof tag === "string") {
+    return getPersonalTagSearchKey(tag);
+  }
+
+  return tag?.normalizedName || tag?.key || getPersonalTagSearchKey(getPersonalTagName(tag));
+}
+
+function getPersonalTagCount(tag) {
+  if (typeof tag === "string") {
+    return null;
+  }
+
+  return tag?.total ?? tag?.count ?? tag?.contentCount ?? tag?.usageCount ?? null;
+}
+
+function normalizeContentResult(content) {
+  return {
+    ...content,
+    text: content?.text || content?.content || content?.summary || "Clique para abrir o conteúdo completo.",
+    tags: Array.isArray(content?.tags) ? content.tags : []
+  };
 }
 
 function getAllTagsFromCatalog() {
@@ -355,12 +433,16 @@ async function fetchTags() {
   }
 }
 
-async function fetchContentsByTags(tags) {
+async function fetchContentsByTags(tags, level = "") {
   const params = new URLSearchParams();
 
   tags.forEach((tag) => {
     params.append("tags", tag);
   });
+
+  if (level) {
+    params.append("level", level);
+  }
 
   return apiRequest(`/content/search?${params.toString()}`, {
     auth: true
@@ -385,13 +467,13 @@ async function fetchContentDetail(contentId) {
 }
 
 async function fetchFavorites() {
-  return apiRequest("/content/favorites", {
+  return apiRequest("/me/favorites", {
     auth: true
   });
 }
 
 async function fetchHistory() {
-  return apiRequest("/content/history", {
+  return apiRequest("/me/history", {
     auth: true
   });
 }
@@ -412,7 +494,7 @@ async function unfavoriteContent(contentId) {
 
 async function confirmContentTags(contentId) {
   return apiRequest(`/content/${contentId}/tags/confirm`, {
-    method: "PATCH",
+    method: "POST",
     auth: true
   });
 }
@@ -424,6 +506,57 @@ async function updateContentTags(contentId, tags) {
     body: {
       tags
     }
+  });
+}
+
+async function fetchContentRecommendations(contentId, limit = 6) {
+  const params = new URLSearchParams({
+    limit: String(limit)
+  });
+
+  return apiRequest(`/content/${contentId}/recommendations?${params.toString()}`, {
+    auth: true
+  });
+}
+
+async function fetchPersonalTags(contentId) {
+  return apiRequest(`/content/${contentId}/personal-tags`, {
+    auth: true
+  });
+}
+
+async function createPersonalTag(contentId, name) {
+  return apiRequest(`/content/${contentId}/personal-tags`, {
+    method: "POST",
+    auth: true,
+    body: {
+      name
+    }
+  });
+}
+
+async function deletePersonalTag(contentId, tagId) {
+  return apiRequest(`/content/${contentId}/personal-tags/${tagId}`, {
+    method: "DELETE",
+    auth: true
+  });
+}
+
+async function fetchUserPersonalTags() {
+  return apiRequest("/me/tags", {
+    auth: true
+  });
+}
+
+async function fetchContentsByPersonalTags(tags) {
+  const params = new URLSearchParams();
+
+  tags.forEach((tag) => {
+    params.append("tags", tag);
+  });
+
+  return apiRequest(`/content/personal-tags/search?${params.toString()}`, {
+    auth: true
   });
 }
 
@@ -476,6 +609,64 @@ function formatSemanticDistance(distance) {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3
   }).format(distance)}`;
+}
+
+const levelLabels = {
+  BASIC: "Básico",
+  INTERMEDIATE: "Intermediário",
+  ADVANCED: "Avançado"
+};
+
+function normalizeLevel(level) {
+  return String(level || "").trim().toUpperCase();
+}
+
+function getLevelLabel(level) {
+  const normalizedLevel = normalizeLevel(level);
+  return levelLabels[normalizedLevel] || "Nível não informado";
+}
+
+function getLevelClass(level) {
+  const normalizedLevel = normalizeLevel(level);
+
+  if (normalizedLevel === "BASIC") {
+    return "is-basic";
+  }
+
+  if (normalizedLevel === "ADVANCED") {
+    return "is-advanced";
+  }
+
+  if (normalizedLevel === "INTERMEDIATE") {
+    return "is-intermediate";
+  }
+
+  return "is-unknown";
+}
+
+function getLevelBadgeMarkup(level) {
+  if (!level) {
+    return "";
+  }
+
+  return `<span class="level-badge ${getLevelClass(level)}">${getLevelLabel(level)}</span>`;
+}
+
+function renderDocumentLevel(level) {
+  if (!documentLevel) {
+    return;
+  }
+
+  if (!level) {
+    documentLevel.hidden = true;
+    documentLevel.textContent = "";
+    documentLevel.className = "level-badge";
+    return;
+  }
+
+  documentLevel.hidden = false;
+  documentLevel.textContent = getLevelLabel(level);
+  documentLevel.className = `level-badge ${getLevelClass(level)}`;
 }
 
 function normalizeSimilarContent(content) {
@@ -628,15 +819,84 @@ function updateLoadedContent(updatedContent) {
   });
 }
 
-function showScreen(screenName) {
+
+function captureLibrarySearchState() {
+  if (currentListMode !== "search") {
+    return;
+  }
+
+  savedLibrarySearchState = {
+    selectedTags: [...selectedTags],
+    appliedTags: [...appliedTags],
+    searchMode,
+    appliedSemanticQuery,
+    appliedLevel,
+    activeGroupKey,
+    loadedContents: [...loadedContents],
+    hasSearched,
+    libraryErrorMessage,
+    searchInputValue: searchInput.value,
+    semanticSearchInputValue: semanticSearchInput.value,
+    levelFilterValue: levelFilter.value,
+    isManualSearchHidden: manualSearch.hidden
+  };
+}
+
+function restoreLibrarySearchState() {
+  currentListMode = "search";
+  appliedPersonalTag = "";
+  libraryErrorMessage = "";
+  isLoadingContents = false;
+
+  if (savedLibrarySearchState) {
+    selectedTags = [...savedLibrarySearchState.selectedTags];
+    appliedTags = [...savedLibrarySearchState.appliedTags];
+    searchMode = savedLibrarySearchState.searchMode;
+    appliedSemanticQuery = savedLibrarySearchState.appliedSemanticQuery;
+    appliedLevel = savedLibrarySearchState.appliedLevel;
+    activeGroupKey = savedLibrarySearchState.activeGroupKey;
+    loadedContents = [...savedLibrarySearchState.loadedContents];
+    hasSearched = savedLibrarySearchState.hasSearched;
+    libraryErrorMessage = savedLibrarySearchState.libraryErrorMessage;
+    searchInput.value = savedLibrarySearchState.searchInputValue;
+    semanticSearchInput.value = savedLibrarySearchState.semanticSearchInputValue;
+    levelFilter.value = savedLibrarySearchState.levelFilterValue;
+    manualSearch.hidden = savedLibrarySearchState.isManualSearchHidden;
+  }
+
+  renderSearchMode();
+  renderTagGroups();
+  renderSubTags();
+  renderSelectedTags();
+}
+
+function updateLibrarySearchVisibility() {
+  if (!toolbarCard) {
+    return;
+  }
+
+  toolbarCard.hidden = currentListMode !== "search";
+}
+
+function openLibrarySearch() {
+  restoreLibrarySearchState();
+  showScreen("library", { keepCurrentList: true });
+}
+
+function showScreen(screenName, options = {}) {
   if (screenName === "submit" && !requireAuthentication("Faça login para enviar novos conteúdos.")) {
     return;
   }
 
-  Object.values(screens).forEach((screen) => screen.classList.remove("is-active"));
-  screens[screenName].classList.add("is-active");
+  Object.values(screens).forEach((screen) => screen?.classList.remove("is-active"));
+  screens[screenName]?.classList.add("is-active");
 
   if (screenName === "library") {
+    if (!options.keepCurrentList && currentListMode !== "search") {
+      restoreLibrarySearchState();
+    }
+
+    updateLibrarySearchVisibility();
     renderContents();
   }
 
@@ -647,6 +907,12 @@ function showScreen(screenName) {
 
   if (screenName === "submit") {
     clearContentFeedback();
+  }
+
+  if (screenName === "profile") {
+    renderProfileInfo();
+    renderProfileTags();
+    renderProfileResults();
   }
 }
 
@@ -661,6 +927,7 @@ function renderSearchMode() {
 
   tagSearchControls.hidden = isSemanticSearch;
   semanticSearchPanel.hidden = !isSemanticSearch;
+  levelFilterPanel.hidden = isSemanticSearch;
   toggleSearchButton.hidden = isSemanticSearch;
   applyFiltersButton.textContent = isSemanticSearch ? "Buscar" : "Filtrar";
   searchModeHelper.textContent = isSemanticSearch
@@ -789,12 +1056,14 @@ async function applyFilters() {
   }
 
   currentListMode = "search";
+  appliedPersonalTag = "";
   hasSearched = true;
   loadedContents = [];
   libraryErrorMessage = "";
 
   if (searchMode === "semantic") {
     appliedTags = [];
+    appliedPersonalTag = "";
     appliedSemanticQuery = semanticSearchInput.value.trim();
 
     if (!appliedSemanticQuery) {
@@ -831,7 +1100,9 @@ async function applyFilters() {
   }
 
   appliedTags = [...selectedTags];
+  appliedLevel = levelFilter.value;
   appliedSemanticQuery = "";
+  appliedPersonalTag = "";
 
   if (appliedTags.length === 0) {
     renderContents();
@@ -842,7 +1113,7 @@ async function applyFilters() {
   renderContents();
 
   try {
-    const data = await fetchContentsByTags(appliedTags);
+    const data = await fetchContentsByTags(appliedTags, appliedLevel);
     loadedContents = Array.isArray(data) ? data : [];
   } catch (error) {
     loadedContents = [];
@@ -857,6 +1128,8 @@ function clearFilters() {
   selectedTags = [];
   appliedTags = [];
   appliedSemanticQuery = "";
+  appliedLevel = "";
+  appliedPersonalTag = "";
   activeGroupKey = "";
   currentListMode = "search";
   hasSearched = false;
@@ -865,6 +1138,7 @@ function clearFilters() {
 
   clearManualSearch();
   semanticSearchInput.value = "";
+  levelFilter.value = "";
 
   renderTagGroups();
   renderSubTags();
@@ -881,6 +1155,10 @@ function getResultsTitle() {
     return "Histórico de leitura";
   }
 
+  if (currentListMode === "personal-tags") {
+    return `Tag personalizada: ${appliedPersonalTag || "selecionada"}`;
+  }
+
   return searchMode === "semantic" ? "Resultados da busca semântica" : "Conteúdos encontrados";
 }
 
@@ -891,6 +1169,10 @@ function getEmptyMessage() {
 
   if (currentListMode === "history") {
     return "Seu histórico ainda está vazio. Abra algum conteúdo para registrá-lo aqui.";
+  }
+
+  if (currentListMode === "personal-tags") {
+    return "Nenhum conteúdo encontrado para esta tag personalizada.";
   }
 
   return searchMode === "semantic"
@@ -916,14 +1198,15 @@ function createContentCard(content) {
   const semanticBadge = hasSemanticDistance
     ? '<span class="semantic-badge">Busca semântica</span>'
     : "";
+  const levelBadge = getLevelBadgeMarkup(content.level);
   const semanticMeta = hasSemanticDistance
-    ? `<span class="semantic-meta">${formatSemanticDistance(content.semanticDistance)}</span>`
+    ? '<span class="semantic-meta">Encontrado por significado</span>'
     : "";
 
   card.innerHTML = `
     <div class="card-topline">
       <span class="content-category">${getCategoryLabel(content.category)}</span>
-      <span class="card-badges">${semanticBadge}${reviewBadge}</span>
+      <span class="card-badges">${levelBadge}${semanticBadge}${reviewBadge}</span>
     </div>
     <strong>${content.title}</strong>
     <p>${summaryText}</p>
@@ -986,7 +1269,7 @@ function renderContents() {
   }
 
   loadedContents.forEach((content) => {
-    contentGrid.appendChild(createContentCard(content));
+    contentGrid.appendChild(createContentCard(normalizeContentResult(content)));
   });
 
   resultCount.textContent = `${loadedContents.length} conteúdo${loadedContents.length === 1 ? "" : "s"}`;
@@ -1007,17 +1290,18 @@ function renderDocument(content) {
   documentTags.innerHTML = (content.tags || [])
     .map((tag) => `<span>${getTagLabel(tag)}</span>`)
     .join("");
+  renderDocumentLevel(content.level);
 
   renderDocumentReview(content);
   updateDocumentFavoriteButton();
+  updatePersonalTagsButton();
 }
 
-function renderDocumentReview(content) {
-  const hasTrustData = Boolean(content?.lowConfidenceAlert) ||
-    typeof content?.probability === "number" ||
-    content?.revised === true;
 
-  if (!hasTrustData) {
+function renderDocumentReview(content) {
+  const pendingReview = hasPendingLowConfidence(content);
+
+  if (!pendingReview) {
     documentReviewPanel.hidden = true;
     correctionSelectedTags = [];
     correctionActiveGroupKey = "";
@@ -1025,37 +1309,260 @@ function renderDocumentReview(content) {
     return;
   }
 
-  const pendingReview = hasPendingLowConfidence(content);
-  const revised = content?.revised === true;
-
   documentReviewPanel.hidden = false;
-  documentReviewPanel.classList.toggle("is-warning", pendingReview);
-  documentReviewPanel.classList.toggle("is-reviewed", revised);
+  documentReviewPanel.classList.add("is-warning");
+  documentReviewPanel.classList.remove("is-reviewed");
 
-  documentReviewTitle.textContent = pendingReview
-    ? "Classificação com baixa confiança"
-    : "Classificação revisada";
-
-  documentReviewMessage.textContent = pendingReview
-    ? "Este conteúdo foi classificado com baixa confiança. Confira as tags sugeridas e confirme ou selecione as tags corretas no catálogo."
-    : "As tags deste conteúdo já foram revisadas ou confirmadas.";
-
+  documentReviewTitle.textContent = "Classificação com baixa confiança";
+  documentReviewMessage.textContent =
+    "Este conteúdo foi classificado com baixa confiança. Confira as tags sugeridas e confirme ou selecione as tags corretas no catálogo.";
   documentConfidence.textContent = formatConfidence(content.probability);
-  documentReviewStatus.textContent = revised ? "Tags revisadas" : "Revisão pendente";
+  documentReviewStatus.textContent = "Revisão pendente";
 
-  confirmTagsButton.hidden = !pendingReview;
-  confirmTagsButton.disabled = !pendingReview || isReviewActionLoading;
-  tagCorrectionForm.hidden = !pendingReview;
-  correctionTagsButton.disabled = !pendingReview || isReviewActionLoading;
+  confirmTagsButton.hidden = false;
+  confirmTagsButton.disabled = isReviewActionLoading;
+  tagCorrectionForm.hidden = false;
+  correctionTagsButton.disabled = isReviewActionLoading;
 
-  if (pendingReview) {
-    correctionSelectedTags = getUniqueTagKeys(content.tags || correctionSelectedTags);
-  } else {
-    correctionSelectedTags = [];
-    correctionActiveGroupKey = "";
-  }
+  correctionSelectedTags = getUniqueTagKeys(content.tags || correctionSelectedTags);
 
   renderCorrectionTags();
+}
+
+function resetPersonalTagsState() {
+  arePersonalTagsVisible = false;
+  currentPersonalTags = [];
+  isLoadingPersonalTags = false;
+  isPersonalTagActionLoading = false;
+  personalTagInput.value = "";
+  personalTagsPanel.hidden = true;
+  renderPersonalTags();
+}
+
+function updatePersonalTagsButton() {
+  if (!currentDocument?.id || isLoadingDocument) {
+    personalTagsToggleButton.disabled = true;
+    personalTagsToggleButton.textContent = isLoadingDocument ? "Carregando..." : "Tags personalizadas";
+    return;
+  }
+
+  personalTagsToggleButton.disabled = false;
+  personalTagsToggleButton.textContent = arePersonalTagsVisible
+    ? "Ocultar tags personalizadas"
+    : "Tags personalizadas";
+}
+
+function renderPersonalTags() {
+  personalTagsList.innerHTML = "";
+
+  if (!arePersonalTagsVisible) {
+    personalTagsEmpty.classList.remove("is-visible");
+    return;
+  }
+
+  if (isLoadingPersonalTags) {
+    personalTagsEmpty.textContent = "Carregando tags personalizadas...";
+    personalTagsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (currentPersonalTags.length === 0) {
+    personalTagsEmpty.textContent = "Nenhuma tag personalizada adicionada a este conteúdo.";
+    personalTagsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  personalTagsEmpty.classList.remove("is-visible");
+
+  currentPersonalTags.forEach((tag) => {
+    const item = document.createElement("div");
+    item.className = "personal-tag-item";
+
+    const chip = document.createElement("span");
+    chip.className = "personal-tag-chip";
+    chip.textContent = tag.name || tag.normalizedName;
+
+    const removeButton = document.createElement("button");
+    removeButton.className = "text-button personal-tag-remove";
+    removeButton.type = "button";
+    removeButton.textContent = "Remover";
+    removeButton.disabled = isPersonalTagActionLoading;
+    removeButton.addEventListener("click", () => handleDeletePersonalTag(tag.id));
+
+    item.append(chip, removeButton);
+    personalTagsList.appendChild(item);
+  });
+}
+
+async function loadPersonalTags() {
+  if (!currentDocument?.id) {
+    return;
+  }
+
+  isLoadingPersonalTags = true;
+  renderPersonalTags();
+
+  try {
+    const data = await fetchPersonalTags(currentDocument.id);
+    currentPersonalTags = Array.isArray(data) ? data : [];
+  } catch (error) {
+    currentPersonalTags = [];
+    showDocumentFeedback(error.message || "Não foi possível carregar tags personalizadas.", "error");
+  } finally {
+    isLoadingPersonalTags = false;
+    renderPersonalTags();
+  }
+}
+
+async function togglePersonalTagsPanel() {
+  if (!currentDocument?.id || !requireAuthentication("Faça login para gerenciar tags personalizadas.")) {
+    return;
+  }
+
+  arePersonalTagsVisible = !arePersonalTagsVisible;
+  personalTagsPanel.hidden = !arePersonalTagsVisible;
+  updatePersonalTagsButton();
+
+  if (arePersonalTagsVisible) {
+    await loadPersonalTags();
+    personalTagInput.focus();
+  }
+}
+
+async function handlePersonalTagSubmit(event) {
+  event.preventDefault();
+
+  if (!currentDocument?.id || !requireAuthentication("Faça login para criar tags personalizadas.")) {
+    return;
+  }
+
+  const name = personalTagInput.value.trim();
+
+  if (!name) {
+    showDocumentFeedback("Digite uma tag personalizada antes de adicionar.", "error");
+    return;
+  }
+
+  isPersonalTagActionLoading = true;
+  personalTagSubmitButton.disabled = true;
+  personalTagSubmitButton.textContent = "Adicionando...";
+  clearDocumentFeedback();
+  renderPersonalTags();
+
+  try {
+    await createPersonalTag(currentDocument.id, name);
+    personalTagInput.value = "";
+    await loadPersonalTags();
+    showDocumentFeedback("Tag personalizada adicionada.", "success");
+  } catch (error) {
+    showDocumentFeedback(error.message || "Não foi possível adicionar a tag personalizada.", "error");
+  } finally {
+    isPersonalTagActionLoading = false;
+    personalTagSubmitButton.disabled = false;
+    personalTagSubmitButton.textContent = "Adicionar";
+    renderPersonalTags();
+  }
+}
+
+async function handleDeletePersonalTag(tagId) {
+  if (!currentDocument?.id || !tagId || !requireAuthentication("Faça login para remover tags personalizadas.")) {
+    return;
+  }
+
+  isPersonalTagActionLoading = true;
+  clearDocumentFeedback();
+  renderPersonalTags();
+
+  try {
+    await deletePersonalTag(currentDocument.id, tagId);
+    currentPersonalTags = currentPersonalTags.filter((tag) => Number(tag.id) !== Number(tagId));
+    showDocumentFeedback("Tag personalizada removida.", "info");
+  } catch (error) {
+    showDocumentFeedback(error.message || "Não foi possível remover a tag personalizada.", "error");
+  } finally {
+    isPersonalTagActionLoading = false;
+    renderPersonalTags();
+  }
+}
+
+function resetRecommendationsState() {
+  relatedContents = [];
+  isLoadingRecommendations = false;
+  recommendationsErrorMessage = "";
+  relatedContentsSection.hidden = true;
+  renderRecommendations();
+}
+
+function createRelatedContentCard(content) {
+  const card = document.createElement("button");
+  card.className = "related-content-card";
+  card.type = "button";
+
+  const summaryText = content.text || content.content || "Abrir conteúdo relacionado.";
+
+  card.innerHTML = `
+    <span class="semantic-badge">Relacionado por significado</span>
+    <strong>${content.title}</strong>
+    <p>${summaryText}</p>
+    <span class="content-category">${getCategoryLabel(content.category)}</span>
+  `;
+
+  card.addEventListener("click", () => openDocument(content.id));
+
+  return card;
+}
+
+function renderRecommendations() {
+  relatedContentGrid.innerHTML = "";
+
+  if (relatedContentsSection.hidden) {
+    return;
+  }
+
+  if (isLoadingRecommendations) {
+    relatedEmpty.textContent = "Carregando conteúdos relacionados...";
+    relatedEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (recommendationsErrorMessage) {
+    relatedEmpty.textContent = recommendationsErrorMessage;
+    relatedEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (relatedContents.length === 0) {
+    relatedEmpty.textContent = "Nenhum conteúdo relacionado encontrado para este item.";
+    relatedEmpty.classList.add("is-visible");
+    return;
+  }
+
+  relatedEmpty.classList.remove("is-visible");
+
+  relatedContents.forEach((content) => {
+    relatedContentGrid.appendChild(createRelatedContentCard(content));
+  });
+}
+
+async function loadRecommendations(contentId) {
+  relatedContentsSection.hidden = false;
+  isLoadingRecommendations = true;
+  recommendationsErrorMessage = "";
+  relatedContents = [];
+  renderRecommendations();
+
+  try {
+    const data = await fetchContentRecommendations(contentId);
+    relatedContents = Array.isArray(data)
+      ? data.map(normalizeSimilarContent).filter((item) => Number(item.id) !== Number(contentId))
+      : [];
+  } catch (error) {
+    relatedContents = [];
+    recommendationsErrorMessage = error.message || "Não foi possível carregar recomendações.";
+  } finally {
+    isLoadingRecommendations = false;
+    renderRecommendations();
+  }
 }
 
 async function openDocument(contentId) {
@@ -1071,11 +1578,15 @@ async function openDocument(contentId) {
   documentTitle.textContent = "Carregando conteúdo...";
   documentText.textContent = "Buscando detalhe do conteúdo na API.";
   documentTags.innerHTML = "";
+  renderDocumentLevel("");
   documentReviewPanel.hidden = true;
   correctionSelectedTags = [];
   correctionActiveGroupKey = "";
   renderCorrectionTags();
+  resetPersonalTagsState();
+  resetRecommendationsState();
   updateDocumentFavoriteButton();
+  updatePersonalTagsButton();
   showScreen("document");
 
   try {
@@ -1087,15 +1598,20 @@ async function openDocument(contentId) {
 
     const content = await fetchContentDetail(contentId);
     renderDocument(content);
+    loadRecommendations(contentId);
   } catch (error) {
     documentCategory.textContent = "Erro";
     documentTitle.textContent = "Não foi possível abrir o conteúdo";
     documentText.textContent = error.message || "Tente novamente em alguns instantes.";
     documentTags.innerHTML = "";
+    renderDocumentLevel("");
     documentReviewPanel.hidden = true;
+    resetPersonalTagsState();
+    resetRecommendationsState();
   } finally {
     isLoadingDocument = false;
     updateDocumentFavoriteButton();
+    updatePersonalTagsButton();
   }
 }
 
@@ -1233,11 +1749,14 @@ function resetLibraryFiltersForUserList() {
   selectedTags = [];
   appliedTags = [];
   appliedSemanticQuery = "";
+  appliedLevel = "";
+  appliedPersonalTag = "";
   activeGroupKey = "";
   searchMode = "tags";
 
   clearManualSearch();
   semanticSearchInput.value = "";
+  levelFilter.value = "";
   renderSearchMode();
 
   renderTagGroups();
@@ -1245,11 +1764,190 @@ function resetLibraryFiltersForUserList() {
   renderSelectedTags();
 }
 
+
+function renderProfileInfo() {
+  const session = getSession();
+
+  profileEmail.textContent = session?.email || "E-mail não informado";
+}
+
+function renderProfileTags() {
+  profilePersonalTagsList.innerHTML = "";
+  refreshProfileTagsButton.disabled = isLoadingProfileTags;
+  refreshProfileTagsButton.textContent = isLoadingProfileTags ? "Atualizando..." : "Atualizar";
+
+  if (profileTagsErrorMessage) {
+    profileTagsEmpty.textContent = profileTagsErrorMessage;
+    profileTagsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (isLoadingProfileTags) {
+    profileTagsEmpty.textContent = "Carregando suas tags personalizadas...";
+    profileTagsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (profilePersonalTags.length === 0) {
+    profileTagsEmpty.textContent = "Nenhuma tag personalizada criada ainda.";
+    profileTagsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  profileTagsEmpty.classList.remove("is-visible");
+
+  profilePersonalTags.forEach((tag) => {
+    const tagKey = getPersonalTagKey(tag);
+    const tagName = getPersonalTagName(tag);
+    const tagCount = getPersonalTagCount(tag);
+
+    const button = document.createElement("button");
+    button.className = "profile-personal-tag-button";
+    button.type = "button";
+    button.classList.toggle("is-selected", tagKey === profileSelectedTag);
+
+    const label = document.createElement("span");
+    label.textContent = tagName;
+
+    const count = document.createElement("small");
+    count.textContent = tagCount === null ? "Ver conteúdos" : `${tagCount} conteúdo${Number(tagCount) === 1 ? "" : "s"}`;
+
+    button.append(label, count);
+    button.addEventListener("click", () => loadProfileTagContents(tagKey, tagName));
+
+    profilePersonalTagsList.appendChild(button);
+  });
+}
+
+function renderProfileResults() {
+  profileContentGrid.innerHTML = "";
+
+  if (profileResultsErrorMessage) {
+    profileResultCount.textContent = "0 conteúdos";
+    profileResultsEmpty.textContent = profileResultsErrorMessage;
+    profileResultsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (!profileSelectedTag) {
+    profileResultsTitle.textContent = "Selecione uma tag personalizada";
+    profileResultCount.textContent = "0 conteúdos";
+    profileResultsEmpty.textContent = "Escolha uma tag personalizada acima para consultar os conteúdos associados.";
+    profileResultsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  if (isLoadingProfileResults) {
+    profileResultCount.textContent = "Buscando...";
+    profileResultsEmpty.textContent = "Buscando conteúdos associados à tag personalizada.";
+    profileResultsEmpty.classList.add("is-visible");
+    return;
+  }
+
+  profileResultCount.textContent = `${profileTagResults.length} conteúdo${profileTagResults.length === 1 ? "" : "s"}`;
+
+  profileTagResults.forEach((content) => {
+    profileContentGrid.appendChild(createContentCard(normalizeContentResult(content)));
+  });
+
+  if (profileTagResults.length === 0) {
+    profileResultsEmpty.textContent = "Nenhum conteúdo encontrado para esta tag personalizada.";
+    profileResultsEmpty.classList.add("is-visible");
+  } else {
+    profileResultsEmpty.classList.remove("is-visible");
+  }
+}
+
+async function loadProfileTags() {
+  isLoadingProfileTags = true;
+  profileTagsErrorMessage = "";
+  renderProfileTags();
+
+  try {
+    const data = await fetchUserPersonalTags();
+    profilePersonalTags = Array.isArray(data) ? data : [];
+  } catch (error) {
+    profilePersonalTags = [];
+    profileTagsErrorMessage = error.message || "Não foi possível carregar suas tags personalizadas.";
+  } finally {
+    isLoadingProfileTags = false;
+    renderProfileTags();
+  }
+}
+
+async function loadProfileTagContents(tagKey, tagName = tagKey) {
+  if (!tagKey || !requireAuthentication("Faça login para consultar suas tags personalizadas.")) {
+    return;
+  }
+
+  profileSelectedTag = tagKey;
+  profileResultsTitle.textContent = `Conteúdos com: ${tagName}`;
+  profileTagResults = [];
+  profileResultsErrorMessage = "";
+  isLoadingProfileResults = true;
+  renderProfileTags();
+  renderProfileResults();
+
+  try {
+    const data = await fetchContentsByPersonalTags([tagKey]);
+    profileTagResults = Array.isArray(data) ? data.map(normalizeContentResult) : [];
+  } catch (error) {
+    profileTagResults = [];
+    profileResultsErrorMessage = error.message || "Não foi possível buscar conteúdos com esta tag personalizada.";
+  } finally {
+    isLoadingProfileResults = false;
+    renderProfileResults();
+  }
+}
+
+async function openProfile() {
+  if (!requireAuthentication("Faça login para acessar seu perfil.")) {
+    return;
+  }
+
+  profileSelectedTag = "";
+  profileTagResults = [];
+  profileResultsErrorMessage = "";
+  renderProfileInfo();
+  showScreen("profile");
+  await loadProfileTags();
+  renderProfileResults();
+}
+
+async function loadPersonalTagContentsInLibrary(tagKey) {
+  if (!tagKey || !requireAuthentication("Faça login para buscar suas tags personalizadas.")) {
+    return;
+  }
+
+  captureLibrarySearchState();
+  resetLibraryFiltersForUserList();
+  currentListMode = "personal-tags";
+  appliedPersonalTag = tagKey;
+  hasSearched = true;
+  loadedContents = [];
+  libraryErrorMessage = "";
+  isLoadingContents = true;
+
+  showScreen("library", { keepCurrentList: true });
+
+  try {
+    const data = await fetchContentsByPersonalTags([tagKey]);
+    loadedContents = Array.isArray(data) ? data.map(normalizeContentResult) : [];
+  } catch (error) {
+    loadedContents = [];
+    libraryErrorMessage = error.message || "Não foi possível buscar conteúdos com esta tag personalizada.";
+  } finally {
+    isLoadingContents = false;
+    renderContents();
+  }
+}
+
 async function loadFavoriteContents() {
   if (!requireAuthentication("Faça login para consultar seus favoritos.")) {
     return;
   }
 
+  captureLibrarySearchState();
   currentListMode = "favorites";
   hasSearched = true;
   loadedContents = [];
@@ -1257,7 +1955,7 @@ async function loadFavoriteContents() {
   isLoadingContents = true;
 
   resetLibraryFiltersForUserList();
-  showScreen("library");
+  showScreen("library", { keepCurrentList: true });
 
   try {
     const data = await fetchFavorites();
@@ -1277,6 +1975,7 @@ async function loadHistoryContents() {
     return;
   }
 
+  captureLibrarySearchState();
   currentListMode = "history";
   hasSearched = true;
   loadedContents = [];
@@ -1284,7 +1983,7 @@ async function loadHistoryContents() {
   isLoadingContents = true;
 
   resetLibraryFiltersForUserList();
-  showScreen("library");
+  showScreen("library", { keepCurrentList: true });
 
   try {
     const data = await fetchHistory();
@@ -1381,7 +2080,6 @@ async function handleLogin(email, password) {
   saveSession({
     token,
     email,
-    name: data.name || email,
     createdAt: new Date().toISOString()
   });
 
@@ -1402,13 +2100,15 @@ function renderAuthState() {
   if (!session) {
     userStatus.hidden = true;
     userStatus.textContent = "";
+    userStatus.removeAttribute("aria-label");
     authActionButton.textContent = "Login";
     authActionButton.classList.remove("is-logout");
     return;
   }
 
   userStatus.hidden = false;
-  userStatus.textContent = session.name || session.email;
+  userStatus.textContent = "Usuário";
+  userStatus.setAttribute("aria-label", "Abrir perfil do usuário");
   authActionButton.textContent = "Sair";
   authActionButton.classList.add("is-logout");
 }
@@ -1417,6 +2117,13 @@ function logout() {
   clearSession();
   favoriteContentIds = new Set();
   currentDocument = null;
+  resetPersonalTagsState();
+  resetRecommendationsState();
+  profilePersonalTags = [];
+  profileSelectedTag = "";
+  profileTagResults = [];
+  profileTagsErrorMessage = "";
+  profileResultsErrorMessage = "";
   renderAuthState();
   clearFilters();
   showScreen("library");
@@ -1426,6 +2133,13 @@ function renderContentSuccess(response) {
   successTitle.textContent = "Texto enviado com sucesso.";
   successMessage.textContent = "O conteúdo foi processado pela API e salvo para consulta na biblioteca.";
   successTags.innerHTML = "";
+
+  if (response?.level) {
+    const levelSpan = document.createElement("span");
+    levelSpan.className = `level-badge ${getLevelClass(response.level)}`;
+    levelSpan.textContent = `Nível: ${getLevelLabel(response.level)}`;
+    successTags.appendChild(levelSpan);
+  }
 
   const tags = response?.additionalInformation || [];
 
@@ -1553,7 +2267,7 @@ toggleSearchButton.addEventListener("click", () => {
 
 searchInput.addEventListener("input", renderTagSuggestions);
 
-searchInput.addEventListener("keydown", (event) => {
+searchInput.addEventListener("keydown", async (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
 
@@ -1562,6 +2276,13 @@ searchInput.addEventListener("keydown", (event) => {
 
     if (matchedTag) {
       addTagFromSuggestion(matchedTag.key);
+      return;
+    }
+
+    const personalTagKey = getPersonalTagSearchKey(typedTag);
+
+    if (personalTagKey) {
+      await loadPersonalTagContentsInLibrary(personalTagKey);
     }
   }
 
@@ -1574,12 +2295,21 @@ applyFiltersButton.addEventListener("click", applyFilters);
 clearFiltersButton.addEventListener("click", clearFilters);
 historyButton.addEventListener("click", loadHistoryContents);
 favoritesButton.addEventListener("click", loadFavoriteContents);
+userStatus.addEventListener("click", openProfile);
+refreshProfileTagsButton.addEventListener("click", loadProfileTags);
 documentFavoriteButton.addEventListener("click", toggleDocumentFavorite);
+personalTagsToggleButton.addEventListener("click", togglePersonalTagsPanel);
+personalTagForm.addEventListener("submit", handlePersonalTagSubmit);
 confirmTagsButton.addEventListener("click", handleConfirmTags);
 tagCorrectionForm.addEventListener("submit", handleTagCorrection);
 
 document.querySelectorAll("[data-view]").forEach((button) => {
   button.addEventListener("click", () => {
+    if (button.dataset.view === "library") {
+      openLibrarySearch();
+      return;
+    }
+
     showScreen(button.dataset.view);
   });
 });
@@ -1587,4 +2317,7 @@ document.querySelectorAll("[data-view]").forEach((button) => {
 setAuthMode("login");
 renderAuthState();
 renderSearchMode();
+updateLibrarySearchVisibility();
+renderPersonalTags();
+renderRecommendations();
 fetchTags();
