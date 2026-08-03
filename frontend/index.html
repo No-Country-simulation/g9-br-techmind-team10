@@ -23,7 +23,7 @@
             <button class="ghost-button" type="button" id="history-button">Histórico</button>
             <button class="ghost-button" type="button" id="favorites-button">Favoritos</button>
             <button class="ghost-button" type="button" data-view="submit">Enviar conteúdo</button>
-            <span class="user-status" id="user-status" hidden></span>
+            <button class="user-status" type="button" id="user-status" hidden title="Abrir perfil do usuário"></button>
             <button class="login-button" type="button" id="auth-action-button">Login</button>
         </nav>
     </header>
@@ -87,6 +87,16 @@
                         <div class="selected-tags" id="selected-tags">
                             <span class="muted-text">Nenhuma tag selecionada.</span>
                         </div>
+                    </div>
+
+                    <div class="level-filter-panel" id="level-filter-panel">
+                        <label class="search-label" for="level-filter">Filtrar por nível</label>
+                        <select id="level-filter" class="search-input">
+                            <option value="">Todos os níveis</option>
+                            <option value="BASIC">Básico</option>
+                            <option value="INTERMEDIATE">Intermediário</option>
+                            <option value="ADVANCED">Avançado</option>
+                        </select>
                     </div>
                 </div>
 
@@ -198,20 +208,104 @@
             <button class="primary-button" type="button" data-view="library">Ir para biblioteca</button>
         </section>
 
+
+        <section class="profile-page screen" id="profile-screen" aria-labelledby="profile-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Perfil</p>
+                    <h2 id="profile-title">Minha conta</h2>
+                </div>
+                <button class="ghost-button" type="button" data-view="library">Voltar para biblioteca</button>
+            </div>
+
+            <div class="profile-layout">
+                <article class="profile-card" aria-label="Dados do usuário">
+                    <p class="eyebrow">Usuário logado</p>
+                    <h3>Dados da conta</h3>
+                    <div class="profile-fields">
+                        <div class="profile-field">
+                            <span>E-mail</span>
+                            <strong id="profile-email">--</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <section class="profile-card" aria-labelledby="profile-tags-title">
+                    <div class="profile-card-header">
+                        <div>
+                            <p class="eyebrow">Organização pessoal</p>
+                            <h3 id="profile-tags-title">Minhas tags personalizadas</h3>
+                        </div>
+                        <button class="ghost-button compact" type="button" id="refresh-profile-tags-button">
+                            Atualizar
+                        </button>
+                    </div>
+                    <p class="profile-help">
+                        Clique em uma tag para ver os conteúdos em que ela foi aplicada.
+                    </p>
+                    <div class="profile-personal-tags-list" id="profile-personal-tags-list"></div>
+                    <div class="empty-state" id="profile-tags-empty">Nenhuma tag personalizada criada ainda.</div>
+                </section>
+            </div>
+
+            <section class="results-section profile-results-section" aria-labelledby="profile-results-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Conteúdos marcados</p>
+                        <h2 id="profile-results-title">Selecione uma tag personalizada</h2>
+                    </div>
+                    <span class="result-count" id="profile-result-count">0 conteúdos</span>
+                </div>
+
+                <div class="content-grid" id="profile-content-grid"></div>
+                <div class="empty-state is-visible" id="profile-results-empty">
+                    Escolha uma tag personalizada acima para consultar os conteúdos associados.
+                </div>
+            </section>
+        </section>
+
         <section class="document-page screen" id="document-screen" aria-labelledby="document-title">
             <div class="document-actions">
                 <button class="back-button" type="button" data-view="library">Voltar para biblioteca</button>
                 <button class="ghost-button favorite-button" type="button" id="document-favorite-button">
                     Favoritar conteúdo
                 </button>
+                <button class="ghost-button" type="button" id="personal-tags-toggle-button">
+                    Tags personalizadas
+                </button>
             </div>
 
             <div class="document-feedback" id="document-feedback" hidden></div>
+
+            <section class="document-personal-tags-panel" id="document-personal-tags-panel" hidden
+                aria-label="Tags personalizadas do conteúdo">
+                <div class="personal-tags-header">
+                    <div>
+                        <p class="eyebrow">Organização pessoal</p>
+                        <h3>Tags personalizadas</h3>
+                    </div>
+                    <span class="muted-text">Visíveis apenas para o usuário logado.</span>
+                </div>
+
+                <form class="personal-tag-form" id="personal-tag-form">
+                    <label class="search-label" for="personal-tag-input">Nova tag personalizada</label>
+                    <div class="personal-tag-input-row">
+                        <input id="personal-tag-input" type="text" placeholder="Ex.: ler depois, revisar, importante" maxlength="60">
+                        <button class="primary-button compact" type="submit" id="personal-tag-submit-button">Adicionar</button>
+                    </div>
+                </form>
+
+                <div class="personal-tags-list" id="personal-tags-list"></div>
+                <div class="empty-state" id="personal-tags-empty">Nenhuma tag personalizada adicionada a este conteúdo.</div>
+            </section>
 
             <div class="document-layout">
                 <article class="document-view">
                     <p class="eyebrow" id="document-category">Categoria</p>
                     <h2 id="document-title">Título do documento</h2>
+                    <div class="document-meta" id="document-meta">
+                        <span class="level-badge" id="document-level" hidden></span>
+                    </div>
                     <div class="document-tags" id="document-tags"></div>
                     <p id="document-text"></p>
                 </article>
@@ -265,6 +359,18 @@
                     </form>
                 </aside>
             </div>
+
+            <section class="related-contents-section" id="related-contents-section" hidden
+                aria-labelledby="related-contents-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Conteúdos relacionados</p>
+                        <h2 id="related-contents-title">Recomendações por similaridade</h2>
+                    </div>
+                </div>
+                <div class="related-content-grid" id="related-content-grid"></div>
+                <div class="empty-state" id="related-empty">Carregando conteúdos relacionados...</div>
+            </section>
         </section>
     </main>
 
