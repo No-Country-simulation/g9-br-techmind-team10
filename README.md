@@ -33,6 +33,10 @@ A ideia é que a plataforma funcione como um ambiente de apoio ao estudo, à pes
 - Flyway
 - Oracle Database
 - Docker
+- FastAPI
+- Gemini
+- Mockito
+- Testes Unitários
 
 ### Frontend
 
@@ -243,16 +247,8 @@ Atualmente o projeto já possui:
 - Contagem de conteúdos por categoria.
 - Backend inicial para tags personalizadas do usuário.
 - Frontend funcional para biblioteca, envio de conteúdo, favoritos e histórico.
-
-## Próximos passos
-
-Os próximos passos previstos são:
-
-- Finalizar a integração das tags personalizadas com o frontend.
-- Permitir que o usuário crie, visualize e remova suas próprias tags na tela de detalhe do conteúdo.
-- Permitir busca ou filtro de conteúdos por tags personalizadas.
-- Integrar melhorias relacionadas à confiança da classificação do conteúdo.
-- Evoluir a experiência visual da biblioteca e da organização pessoal dos conteúdos.
+- Testes Unitários ,usando Mackito, dos principais endpoints da API.
+- Integra o backend com um serviço Python de predição baseado em modelo .pkl.
 
 # Data Science
 
