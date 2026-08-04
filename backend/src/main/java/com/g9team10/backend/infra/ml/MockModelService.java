@@ -3,12 +3,16 @@ package com.g9team10.backend.infra.ml;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictRequest;
 import com.g9team10.backend.domain.model.valueObject.ModelPredictResult;
 import com.g9team10.backend.domain.service.ModelPredictionService;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Primary
+@ConditionalOnProperty(
+        name = "model.prediction.mode",
+        havingValue = "mock",
+        matchIfMissing = true
+)
 @Service
 public class MockModelService implements ModelPredictionService {
 
