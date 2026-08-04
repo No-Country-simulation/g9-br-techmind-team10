@@ -36,3 +36,7 @@ truststore.jks
 # Local ONNX/vector model files
 docker/oracle/onnx/
 *.onnx
+
+# Local techmind model files
+model-service/models/*.pkl
+model-service/models/*.joblib

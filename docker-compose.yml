@@ -45,9 +45,13 @@ services:
       ORACLE_DB_PASSWORD: ${ORACLE_DB_PASSWORD:-TechmindApp123}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_API_MODEL: ${GEMINI_API_MODEL:-gemini-2.5-flash-lite}
+      MODEL_SERVICE_URL: ${MODEL_SERVICE_URL:-http://model-service:8081}
+      MODEL_PREDICTION_MODE: ${MODEL_PREDICTION_MODE:-service}
     depends_on:
       oracle-db:
         condition: service_healthy
+      model-service:
+        condition: service_healthy  
     restart: unless-stopped
 
   frontend:
@@ -59,5 +63,28 @@ services:
       - backend
     restart: unless-stopped
 
+  model-service:
+    build: ./model-service
+    container_name: techmind-model-service
+    ports:
+      - "8081:8081"
+    environment:
+      MODEL_PATH: /app/models/modelo_techmind.pkl
+    volumes:
+      - ./model-service/models:/app/models:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8081/health')"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
 volumes:
-  oracle-data:
+  oracle-data:  
