@@ -276,6 +276,15 @@ Além disso, será necessária a extração de uma amostra dos dados para valida
 
 A coleta de dados será realizada no sprint 1.
 
+## Implementação do modelo com PKL e FastAPI
+
+Após o treinamento e a escolha do melhor modelo, o classificador foi serializado em um arquivo **`.pkl`** utilizando Python. Esse arquivo armazena o modelo treinado, permitindo que ele seja reutilizado para realizar novas previsões sem a necessidade de treiná-lo novamente.
+
+Para disponibilizar o modelo ao backend, foi desenvolvido um serviço utilizando **Python e FastAPI**. A API recebe o texto técnico enviado pela aplicação, realiza o processamento necessário e utiliza o modelo `.pkl` para gerar a previsão da categoria e sua respectiva confiança.
+
+Dessa forma, o serviço Python funciona como uma camada de integração entre o modelo de Data Science e o backend Spring Boot, permitindo que a classificação automática seja utilizada diretamente pela plataforma TechMind.
+
+
 ## Próximos passos
 
 Os próximos passos previstos são:
