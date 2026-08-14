@@ -38,5 +38,6 @@ docker/oracle/onnx/
 *.onnx
 
 # Local techmind model files
-model-service/models/*.pkl
-model-service/models/*.joblib
+model-service/models/
+*.pkl
+*.joblib
