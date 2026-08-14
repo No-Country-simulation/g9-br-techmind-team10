@@ -1,27 +1,32 @@
 import os
 import re
+import sys
 import unicodedata
-from typing import List
+from typing import Any, Dict, List
 
 import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
+from model_wrapper import ModeloTechMind
+
+
+# Ajuda o joblib a reconhecer a classe caso o .pkl tenha sido salvo a partir de notebook.
+sys.modules["__main__"].ModeloTechMind = ModeloTechMind
 
 
 MODEL_PATH = os.getenv("MODEL_PATH", "/app/models/modelo_techmind.pkl")
 
 app = FastAPI(title="TechMind Model Service")
 
-artifacts = joblib.load(MODEL_PATH)
-
-model = artifacts["modelo"]
-vectorizer = artifacts["vectorizer"]
+modelo_techmind = joblib.load(MODEL_PATH)
 
 
 CATEGORY_MAP = {
     "Backend": "backend",
     "Frontend": "frontend",
     "DataScience": "data-science",
+    "Data Science": "data-science",
     "Database": "database",
     "Cloud": "cloud",
     "Security": "security",
@@ -45,30 +50,36 @@ def normalize_tag(value: str) -> str:
     return value.strip("-")
 
 
-def extract_keywords(text: str, top_n: int = 3) -> List[str]:
-    tfidf_vector = vectorizer.transform([text])
-    scores = tfidf_vector.toarray()[0]
-    terms = vectorizer.get_feature_names_out()
+def normalize_category(value: str) -> str:
+    value = str(value or "").strip()
+    return CATEGORY_MAP.get(value, normalize_tag(value))
 
-    top_indices = scores.argsort()[-top_n:][::-1]
 
-    keywords = []
-    for index in top_indices:
-        if scores[index] > 0:
-            normalized = normalize_tag(terms[index])
-            if normalized and normalized not in keywords:
-                keywords.append(normalized)
+def adapt_new_wrapper_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    raw_category = result.get("categoria")
+    raw_probability = result.get("probabilidade")
+    raw_keywords = result.get("informacoes_adicionais", [])
 
-    return keywords
+    category = normalize_category(raw_category)
+
+    tags: List[str] = []
+    for tag in [category, *raw_keywords]:
+        normalized = normalize_tag(tag)
+        if normalized and normalized not in tags:
+            tags.append(normalized)
+
+    return {
+        "category": category,
+        "probability": raw_probability,
+        "tags": tags,
+    }
 
 
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "model": type(model).__name__,
-        "vectorizer": type(vectorizer).__name__,
-        "classes": list(model.classes_),
+        "model": type(modelo_techmind).__name__,
     }
 
 
@@ -82,25 +93,6 @@ def predict(request: PredictRequest):
     if not combined_text:
         raise HTTPException(status_code=400, detail="title or text is required")
 
-    vector = vectorizer.transform([combined_text])
+    result = modelo_techmind.predict(combined_text)
 
-    raw_category = str(model.predict(vector)[0])
-    category = CATEGORY_MAP.get(raw_category, normalize_tag(raw_category))
-
-    probability = None
-    if hasattr(model, "predict_proba"):
-        probability = float(model.predict_proba(vector)[0].max())
-
-    keywords = extract_keywords(combined_text, top_n=3)
-
-    tags = []
-    for tag in [category, *keywords]:
-        normalized = normalize_tag(tag)
-        if normalized and normalized not in tags:
-            tags.append(normalized)
-
-    return {
-        "category": category,
-        "probability": probability,
-        "tags": tags,
-    }
+    return adapt_new_wrapper_result(result)
