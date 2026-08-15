@@ -1,0 +1,12 @@
+requests
+pandas
+numpy
+matplotlib
+seaborn
+regex
+spacy
+langdetect
+yake
+keybert
+joblib
+scikit-learn
