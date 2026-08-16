@@ -250,62 +250,17 @@ Atualmente o projeto já possui:
 - Testes Unitários ,usando Mackito, dos principais endpoints da API.
 - Integra o backend com um serviço Python de predição baseado em modelo .pkl.
 
-# Data Science
-
-# 🔎 **Coleta de Dados**
-
-## Origem dos Dados
-
-A DEV Community é uma comunidade com mais de três milhões de desenvolvedores de software [1] . No site, os desenvolvedores escrevem artigos (posts de blog, perguntas em fóruns de discussão, tópicos de ajuda, etc.), participam de discussões e constroem seus perfis profissionais [2].
-
-O site é hospedado pelo FOREM [2], um software de código aberto para a construção de comunidades. Na documentação do FOREM é disponibilizada uma API pública [3] que retorna os textos publicados, tags sobre o assunto tratado, entre outras informações. A documentação da API não estabelece uma licença específica para os dados disponibilizados. Os dados que podem identificar de alguma forma os autores dos textos foram ocultados.
-
-Para realizar a coleta dos dados foi utilizada a versão 1 [4] da API pública do DEV Community
-
-### ⚖️ Governança de Dados, Ética e Licenciamento
-
-Os dados brutos coletados por este script são obtidos de forma pública, respeitando as diretrizes de taxa de requisição da plataforma (*rate-limiting* via pausas controladas no código).
-
-Em conformidade com as políticas do site DEV.to, os artigos textuais consumidos estão sob a licença padrão **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**.[5]
-
-## O Problema
-
-Para realizar o projeto TechMind no Hackathon ONE, é necessário obter textos técnicos da área de tecnologia para treinar um modelo de classificação de textos. O modelo irá classificar os textos pelo assunto principal, que aqui estamos chamando de categoria. Os dados obtidos, através da API, não possuem um target que represente a categoria. Porém os artigos publicados no site Dev Community, possuem tags associadas a eles, que representam o tema do artigo. Conforme a documentação da API, essas tags podem ser utilizadas nos parametros da API para obter artigos especificos. Dito isso, se faz necessário realizar a Rotulagem de Dados (Data Labeling), gerando assim o target de cada texto.
-
-Além disso, será necessária a extração de uma amostra dos dados para validação manual dos textos, afim de conferir se os mesmos são realmente da categoria a que foi associado. Dessa forma iremos validar a qualidade dos dados e consequentemente viabilizar a utilização dos mesmos no projeto.
-
-A coleta de dados será realizada no sprint 1.
-
 ## Implementação do modelo com PKL e FastAPI
 
-Após o treinamento e a escolha do melhor modelo, o classificador foi serializado em um arquivo **`.pkl`** utilizando Python. Esse arquivo armazena o modelo treinado, permitindo que ele seja reutilizado para realizar novas previsões sem a necessidade de treiná-lo novamente.
+O modelo utilizado nesta etapa é resultado de um pipeline de Data Science desenvolvido em notebooks sequenciais, que inclui coleta de dados via API do Dev.to, validação manual de amostra, limpeza e pré-processamento NLP, treinamento e comparação de algoritmos de classificação (Regressão Logística, Naive Bayes e SVM), e extração de palavras-chave com KeyBERT. O modelo utilizado em produção é o de **Regressão Logística**.
 
-Para disponibilizar o modelo ao backend, foi desenvolvido um serviço utilizando **Python e FastAPI**. A API recebe o texto técnico enviado pela aplicação, realiza o processamento necessário e utiliza o modelo `.pkl` para gerar a previsão da categoria e sua respectiva confiança.
+Todo o pipeline, incluindo notebooks, datasets intermediários (.csv), geração dos artefatos e descrições, está disponível na pasta [`datascience/`](./datascience/) e em [`datascience/README.md`](./datascience/README.md).
+
+Após o treinamento e a escolha do melhor modelo, o classificador, o vetorizador TF-IDF e o extrator de palavras-chave foram encapsulados em uma única classe e serializados em Python no formato **`.pkl`**. Esse artefato armazena todo o pipeline treinado, permitindo que ele seja reutilizado para gerar novas previsões (categoria, probabilidade e palavras-chave) sem necessidade de novo treinamento.
+
+Para disponibilizar esse artefato ao backend, foi desenvolvido um serviço utilizando **Python e FastAPI**. A API recebe o título e o texto técnico enviado pela aplicação, realiza o processamento necessário e utiliza o modelo serializado para gerar a previsão da categoria, a probabilidade de confiança e as palavras-chave.
 
 Dessa forma, o serviço Python funciona como uma camada de integração entre o modelo de Data Science e o backend Spring Boot, permitindo que a classificação automática seja utilizada diretamente pela plataforma TechMind.
-
-
-## Próximos passos
-
-Os próximos passos previstos são:
-
-- Análise Exploratória (EAD) + verificação sobre desbalanceamento de categorias
-- Tratamento de texto (lowercase, remoção de ruído, stopwords, tokenização simples)
-- Vetorização TF-IDF
-- Separação Treino e Teste
-- Aplicação de 3 modelos (SVM, Regressão Logística, Naive Bayes)
-- Escolha do melhor modelo
-- Serialização
-
-## Refererências
-
-> * **[1]** DEV COMMUNITY. *Site*. Disponível em: [https://dev.to/](https://dev.to/). Acesso em: 9 jul. 2026.
-> * **[2]** FOREM. *Sobre dev.to*. Disponível em: [https://github.com/forem/forem/](https://github.com/forem/forem/). Acesso em: 9 jul. 2026.
-> * **[3]** API. *Versões da API*. Disponível em: [https://developers.forem.com/api](https://developers.forem.com/api). Acesso em: 9 jul. 2026.
-> * **[4]** Forem API V1. *Documentação da API*. Disponível em: [https://developers.forem.com/api/v1](https://developers.forem.com/api/v1). Acesso em: 9 jul. 2026.
-> * **[5]** Licença (CC BY-SA 4.0): [https://creativecommons.org/licenses/by-sa/4.0/deed.en](https://creativecommons.org/licenses/by-sa/4.0/deed.en)
-
-
 
 ## Rodando o projeto localmente com Docker Compose
 
