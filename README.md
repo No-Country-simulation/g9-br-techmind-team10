@@ -2,6 +2,16 @@
 
 # TechMind — Plataforma de Catalogação Inteligente de Conteúdos Técnicos
 
+## Experimente o TechMind na OCI
+
+O projeto está disponível online, hospedado na **Oracle Cloud Infrastructure (OCI)**.
+
+### 🌐 Frontend
+
+👉 [**Acessar o TechMind**](https://objectstorage.sa-saopaulo-1.oraclecloud.com/n/grjan2o1kcmy/b/techmind-frontend/o/index.html)
+
+> Frontend hospedado via **OCI Object Storage**.
+
 ## Visão geral
 
 O **TechMind** é uma aplicação desenvolvida para organizar, classificar e consultar conteúdos técnicos de forma mais eficiente. A proposta do projeto é permitir que usuários cadastrem textos, artigos, anotações ou materiais de estudo, e que esses conteúdos sejam categorizados por tags técnicas, facilitando futuras buscas e revisões.
